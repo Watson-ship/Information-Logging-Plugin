@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="投递管家">
+<meta name="application-name" content="实习投递管家">
+<meta name="description" content="记录实习投递的公司、地点、薪资、要求、关键日期与面试进度，数据只存在本机。">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="mask-icon" href="./icon.svg" color="#4f46e5">
+<title>实习投递管家</title>
+<style>
+/* ============ 主题变量 ============ */
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --surface-2:#f8fafc; --surface-3:#eef1f7;
+  --border:#e3e7ef; --border-strong:#cfd6e4;
+  --text:#131a26; --text-2:#5b6577; --text-3:#8b95a7;
+  --accent:#4f46e5; --accent-soft:#eef0ff; --accent-text:#4338ca;
+  --danger:#dc2626; --danger-soft:#fdecec;
+  --warn:#d97706; --warn-soft:#fdf3e3;
+  --ok:#059669; --ok-soft:#e6f7f1;
+  --info:#0284c7; --info-soft:#e6f3fb;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 6px 20px rgba(16,24,40,.06);
+  --shadow-lg:0 10px 40px rgba(16,24,40,.16);
+  --radius:14px; --radius-sm:10px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+html[data-theme="dark"]{
+  --bg:#0d1017; --surface:#151a23; --surface-2:#1a2029; --surface-3:#212936;
+  --border:#262e3b; --border-strong:#38414f;
+  --text:#e8ecf3; --text-2:#9aa5b6; --text-3:#6c7788;
+  --accent:#7c7cf8; --accent-soft:#1e1f3d; --accent-text:#a5a5ff;
+  --danger:#f87171; --danger-soft:#2a1a1c;
+  --warn:#fbbf24; --warn-soft:#2a2213;
+  --ok:#34d399; --ok-soft:#12271f;
+  --info:#38bdf8; --info-soft:#12242e;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+  --shadow-lg:0 12px 44px rgba(0,0,0,.5);
+}
+
+/* ============ 基础 ============ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--accent-text);text-decoration:none}
+a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:9px}
+::-webkit-scrollbar-track{background:transparent}
+
+#app{display:flex;min-height:100dvh;flex-direction:column}
+main{flex:1;padding:0 0 calc(76px + var(--safe-b));max-width:1180px;width:100%;margin:0 auto}
+
+/* ============ 顶栏 ============ */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  padding:max(10px,var(--safe-t)) 14px 10px;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(160%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-in{display:flex;align-items:center;gap:10px;max-width:1180px;margin:0 auto}
+.topbar h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .sub{font-size:12px;color:var(--text-3);font-weight:500;margin-top:1px}
+.brand-dot{width:30px;height:30px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;
+  display:grid;place-items:center;font-size:16px}
+
+/* ============ 视图容器 ============ */
+.view{display:none;padding:14px}
+.view.active{display:block;animation:fadeUp .18s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ 底部导航 ============ */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:saturate(160%) blur(16px);-webkit-backdrop-filter:saturate(160%) blur(16px);
+  border-top:1px solid var(--border);
+  padding-bottom:var(--safe-b);
+}
+.tabbar button{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 2px 8px;color:var(--text-3);font-size:11px;font-weight:600;
+  transition:color .15s;
+}
+.tabbar button svg{width:21px;height:21px;stroke-width:1.9}
+.tabbar button[aria-selected="true"]{color:var(--accent)}
+
+/* ============ 通用组件 ============ */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;box-shadow:var(--shadow);margin-bottom:12px;
+}
+.card.pad0{padding:0;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;
+  font-weight:700;color:var(--text-2);letter-spacing:.02em}
+.card-h .count{margin-left:auto;font-weight:600;color:var(--text-3);font-size:12px}
+.sec-title{font-size:13px;font-weight:700;color:var(--text-2);margin:20px 4px 9px;
+  display:flex;align-items:center;gap:7px}
+.sec-title:first-child{margin-top:4px}
+
+.row{display:flex;align-items:center;gap:10px}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.tiny{font-size:12px}
+.small{font-size:13px}
+.bold{font-weight:700}
+.mono{font-variant-numeric:tabular-nums}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.clamp3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hidden{display:none !important}
+.center{text-align:center}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.mb0{margin-bottom:0}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 14px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;
+  background:var(--surface-3);color:var(--text);border:1px solid transparent;
+  transition:transform .08s,opacity .15s;white-space:nowrap;
+}
+.btn:active{transform:scale(.97)}
+.btn svg{width:17px;height:17px;stroke-width:2}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border-color:var(--border-strong)}
+.btn.danger{background:var(--danger-soft);color:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:9px}
+.btn.block{width:100%}
+.btn.icon{padding:8px;border-radius:10px;background:transparent;color:var(--text-2)}
+.btn:disabled{opacity:.45;pointer-events:none}
+
+/* 表单 */
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--text-2);margin-bottom:5px}
+.field label .req{color:var(--danger);margin-left:2px}
+.field .hint{font-size:11.5px;color:var(--text-3);margin-top:4px;line-height:1.45}
+input[type=text],input[type=url],input[type=email],input[type=tel],input[type=date],
+input[type=datetime-local],input[type=number],select,textarea{
+  width:100%;padding:10px 11px;border-radius:var(--radius-sm);
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  font-size:15px;transition:border-color .15s,box-shadow .15s;
+  -webkit-appearance:none;appearance:none;
+}
+select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b95a7' stroke-width='2'><path d='M4 6.5l4 4 4-4'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:32px}
+textarea{resize:vertical;min-height:84px;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+fieldset{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin:0 0 14px}
+fieldset legend{font-size:12px;font-weight:800;color:var(--text-3);padding:0 6px;
+  letter-spacing:.06em;text-transform:uppercase}
+
+/* 分段控件 */
+.seg{display:flex;gap:4px;background:var(--surface-3);padding:4px;border-radius:11px;
+  overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1 0 auto;padding:7px 13px;border-radius:8px;font-size:13px;
+  font-weight:650;color:var(--text-2);white-space:nowrap;transition:.15s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* 徽标 / 胶囊 */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2.5px 9px;border-radius:999px;
+  font-size:11.5px;font-weight:700;line-height:1.5;white-space:nowrap}
+.st-interested{background:var(--surface-3);color:var(--text-2)}
+.st-applied{background:var(--info-soft);color:var(--info)}
+.st-written{background:var(--accent-soft);color:var(--accent-text)}
+.st-interview{background:var(--warn-soft);color:var(--warn)}
+.st-offer{background:var(--ok-soft);color:var(--ok)}
+.st-rejected{background:var(--danger-soft);color:var(--danger)}
+.st-archived{background:var(--surface-3);color:var(--text-3)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:8px;
+  font-size:12px;background:var(--surface-3);color:var(--text-2);font-weight:600}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.danger{background:var(--danger-soft);color:var(--danger)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.info{background:var(--info-soft);color:var(--info)}
+.tag.accent{background:var(--accent-soft);color:var(--accent-text)}
+
+/* 星星 */
+.stars{display:inline-flex;gap:2px}
+.stars button{padding:2px;color:var(--border-strong);line-height:0}
+.stars button svg{width:22px;height:22px}
+.stars button.on{color:#f5a623}
+.stars.sm button svg{width:13px;height:13px}
+.stars.readonly button{pointer-events:none}
+
+/* 空状态 */
+.empty{text-align:center;padding:44px 20px;color:var(--text-3)}
+.empty .ico{font-size:38px;margin-bottom:10px;opacity:.55;line-height:1}
+.empty h3{margin:0 0 6px;font-size:15px;color:var(--text-2);font-weight:700}
+.empty p{margin:0 auto;font-size:13px;max-width:290px;line-height:1.65}
+
+/* 工具行 */
+.toolbar{display:flex;gap:8px;margin-bottom:11px}
+.search{position:relative;flex:1}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;stroke:var(--text-3);stroke-width:2;pointer-events:none}
+.search input{padding-left:34px}
+
+/* 公司列表条目 */
+.app-item{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .13s}
+.app-item:last-child{border-bottom:none}
+.app-item:active{background:var(--surface-2)}
+@media(hover:hover){.app-item:hover{background:var(--surface-2)}}
+.logo{width:40px;height:40px;border-radius:11px;flex:none;display:grid;place-items:center;
+  font-weight:800;font-size:16px;color:#fff;letter-spacing:-.5px}
+.app-item .nm{font-weight:700;font-size:15px;letter-spacing:-.2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-item .pos{font-size:12.5px;color:var(--text-2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.app-item .meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;align-items:center;
+  font-size:12px;color:var(--text-3)}
+.app-item .meta i{font-style:normal;display:inline-flex;align-items:center;gap:3px}
+.app-item .meta i svg,.tl-head .d svg,.tag svg{width:13px;height:13px;stroke-width:2}
+svg.chev{width:16px;height:16px;flex:none;color:var(--text-3);stroke-width:2}
+.due{font-weight:700}
+.due.soon{color:var(--danger)}
+.due.near{color:var(--warn)}
+
+/* 统计块 */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:6px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:13px;box-shadow:var(--shadow)}
+.stat .v{font-size:25px;font-weight:800;letter-spacing:-1px;line-height:1.15;
+  font-variant-numeric:tabular-nums}
+.stat .k{font-size:11.5px;color:var(--text-3);font-weight:650;margin-top:3px}
+.stat.accent .v{color:var(--accent-text)}
+.stat.ok .v{color:var(--ok)}
+.stat.warn .v{color:var(--warn)}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+.bar-row .lb{width:58px;flex:none;color:var(--text-2);font-weight:650}
+.bar-track{flex:1;height:19px;background:var(--surface-3);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width .45s cubic-bezier(.2,.8,.2,1);min-width:2px}
+.bar-row .vl{width:34px;text-align:right;flex:none;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* 时间线 */
+.tl{position:relative;padding-left:24px}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;
+  background:var(--border);border-radius:2px}
+.tl-item{position:relative;padding:0 0 16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-22px;top:5px;width:11px;height:11px;
+  border-radius:50%;background:var(--surface);border:2.5px solid var(--border-strong)}
+.tl-item.ok::before{border-color:var(--ok)}
+.tl-item.bad::before{border-color:var(--danger)}
+.tl-item.hot::before{border-color:var(--warn)}
+.tl-item.now::before{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.tl-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tl-head .t{font-weight:700;font-size:13.5px}
+.tl-head .d{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.tl-body{font-size:13px;color:var(--text-2);margin-top:3px;white-space:pre-wrap;
+  word-break:break-word;line-height:1.6}
+.tl-actions{display:flex;gap:6px;margin-top:5px;opacity:.75}
+
+/* 附件 */
+.att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px}
+.att{position:relative;border:1px solid var(--border);border-radius:11px;overflow:hidden;
+  background:var(--surface-2);aspect-ratio:1;display:grid;place-items:center;cursor:pointer}
+.att img{width:100%;height:100%;object-fit:cover;display:block}
+.att .fx{font-size:12px;font-weight:800;color:var(--text-3)}
+.att .nm{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:10px;
+  background:rgba(0,0,0,.62);color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att .del{position:absolute;right:3px;top:3px;width:21px;height:21px;border-radius:50%;
+  background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;font-size:13px;line-height:1}
+.drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);
+  padding:15px;text-align:center;color:var(--text-3);font-size:12.5px;cursor:pointer;
+  background:var(--surface-2);transition:.15s}
+.drop:active{border-color:var(--accent);color:var(--accent-text)}
+.drop.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+
+/* 弹层 / 抽屉 */
+.overlay{position:fixed;inset:0;z-index:80;background:rgba(10,14,24,.5);
+  backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;
+  animation:fadeIn .16s ease}
+.overlay.open{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--surface);width:100%;max-height:94dvh;overflow-y:auto;
+  border-radius:20px 20px 0 0;box-shadow:var(--shadow-lg);
+  animation:slideUp .24s cubic-bezier(.2,.85,.25,1);
+  padding-bottom:calc(18px + var(--safe-b));overscroll-behavior:contain}
+@keyframes slideUp{from{transform:translateY(28px);opacity:.6}to{transform:none;opacity:1}}
+.sheet-head{position:sticky;top:0;z-index:3;background:var(--surface);
+  padding:14px 16px 11px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px}
+.sheet-head h2{margin:0;font-size:16.5px;font-weight:750;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-body{padding:15px 16px}
+.sheet-foot{position:sticky;bottom:0;background:var(--surface);
+  border-top:1px solid var(--border);padding:12px 16px;
+  display:flex;gap:9px;padding-bottom:calc(12px + var(--safe-b))}
+.sheet-foot .btn{flex:1}
+
+/* 段落块（详情页） */
+.kv{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.kv:last-child{border-bottom:none}
+.kv .k{width:74px;flex:none;color:var(--text-3);font-size:12.5px;font-weight:650;padding-top:1px}
+.kv .v{flex:1;word-break:break-word;white-space:pre-wrap;min-width:0}
+.longtext{white-space:pre-wrap;word-break:break-word;font-size:13.5px;line-height:1.7;
+  color:var(--text);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:11px;padding:11px;max-height:340px;overflow-y:auto}
+
+/* FAB */
+.fab{position:fixed;right:16px;bottom:calc(78px + var(--safe-b));z-index:55;
+  width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;
+  box-shadow:0 7px 22px color-mix(in srgb,var(--accent) 42%,transparent);
+  display:grid;place-items:center;transition:transform .12s}
+.fab:active{transform:scale(.92)}
+.fab svg{width:26px;height:26px;stroke-width:2.4}
+
+/* 提示条 */
+.alert{display:flex;gap:9px;padding:11px 12px;border-radius:var(--radius-sm);
+  font-size:12.5px;line-height:1.55;margin-bottom:12px;border:1px solid transparent}
+.alert.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+.alert.info{background:var(--info-soft);color:var(--info);border-color:color-mix(in srgb,var(--info) 22%,transparent)}
+.alert.danger{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 22%,transparent)}
+.alert b{font-weight:750}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(96px + var(--safe-b));transform:translate(-50%,14px);
+  z-index:200;background:#111827;color:#fff;padding:10px 17px;border-radius:11px;font-size:13.5px;
+  font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.22s;
+  max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+html[data-theme="dark"] #toast{background:#e8ecf3;color:#111827}
+
+/* 图片预览 */
+#lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.9);display:none;
+  align-items:center;justify-content:center;padding:16px}
+#lightbox.open{display:flex}
+#lightbox img{max-width:100%;max-height:92dvh;border-radius:10px}
+#lightbox .x{position:absolute;top:calc(14px + var(--safe-t));right:14px;color:#fff;
+  font-size:28px;line-height:1;padding:6px 12px;background:rgba(255,255,255,.14);border-radius:10px}
+
+/* 打印（导出 PDF） */
+@media print{
+  .tabbar,.fab,.topbar .btn,.no-print{display:none !important}
+  body{background:#fff}
+  .view{padding:0}
+  .card{box-shadow:none;break-inside:avoid}
+}
+
+/* ============ 宽屏适配 ============ */
+@media(min-width:700px){
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .grid2{grid-template-columns:1fr 1fr}
+  .overlay{align-items:center}
+  .sheet{max-width:660px;border-radius:18px;max-height:88dvh}
+  .view{padding:18px 20px}
+}
+@media(min-width:1000px){
+  #app{flex-direction:row}
+  .tabbar{
+    position:sticky;top:0;bottom:auto;height:100dvh;width:216px;flex:none;
+    grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;
+    gap:3px;padding:74px 11px 16px;border-top:none;border-right:1px solid var(--border);
+    background:var(--surface);backdrop-filter:none;
+  }
+  .tabbar::before{content:"实习投递管家";position:absolute;top:22px;left:20px;
+    font-weight:750;font-size:15px;color:var(--text)}
+  .tabbar button{flex-direction:row;justify-content:flex-start;gap:11px;padding:10px 13px;
+    border-radius:10px;font-size:14px}
+  .tabbar button[aria-selected="true"]{background:var(--accent-soft)}
+  main{padding-bottom:30px}
+  .fab{bottom:26px;right:26px}
+  #toast{bottom:34px}
+}
+@media(min-width:1180px){
+  .app-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .app-list .app-item{border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--surface);box-shadow:var(--shadow)}
+  .card.pad0.list-wrap{background:transparent;border:none;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="tabbar" id="tabbar" role="tablist" aria-label="主导航"></nav>
+
+  <div class="grow" style="display:flex;flex-direction:column;min-width:0">
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="brand-dot" id="brandDot">🎯</div>
+        <div class="grow" style="min-width:0">
+          <h1 id="viewTitle">总览</h1>
+          <div class="sub" id="viewSub"></div>
+        </div>
+        <button class="btn icon no-print" id="btnBack" title="返回" hidden></button>
+        <button class="btn icon no-print" id="btnTheme" title="切换主题"></button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="view active" id="view-dash" role="tabpanel"></section>
+      <section class="view" id="view-list" role="tabpanel"></section>
+      <section class="view" id="view-timeline" role="tabpanel"></section>
+      <section class="view" id="view-stats" role="tabpanel"></section>
+      <section class="view" id="view-settings" role="tabpanel"></section>
+      <section class="view" id="view-detail" role="tabpanel"></section>
+    </main>
+  </div>
+</div>
+
+<button class="fab no-print" id="fab" title="新增投递记录"></button>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">标题</h2>
+      <button class="btn icon no-print" id="sheetClose" title="关闭"></button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+    <div class="sheet-foot hidden" id="sheetFoot"></div>
+  </div>
+</div>
+
+<div id="lightbox"><span class="x">×</span><img id="lightboxImg" alt=""></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   1. 常量与配置
+   ============================================================ */
+const LS_KEY = "intern-tracker-v1";
+const DAY = 86400000;
+
+/* 用 id 建索引的辅助函数。
+   故意不用 Object.fromEntries：它是 ES2019，旧内核（部分安卓自带浏览器、
+   老 WebView）里不存在，会让脚本在最开头就抛错、整个界面空白。 */
+function byId(list){
+  const m = {};
+  for(let i = 0; i < list.length; i++) m[list[i].id] = list[i];
+  return m;
+}
+
+const STATUS = [
+  {id:"interested", label:"心动待投", short:"待投", cls:"st-interested", color:"#8b95a7", stage:-1},
+  {id:"applied",    label:"已投递",   short:"已投", cls:"st-applied",    color:"#0284c7", stage:0},
+  {id:"written",    label:"笔试中",   short:"笔试", cls:"st-written",    color:"#6366f1", stage:1},
+  {id:"interview",  label:"面试中",   short:"面试", cls:"st-interview",  color:"#d97706", stage:2},
+  {id:"offer",      label:"已获 Offer", short:"Offer", cls:"st-offer",   color:"#059669", stage:3},
+  {id:"rejected",   label:"已挂",     short:"已挂", cls:"st-rejected",   color:"#dc2626", stage:4},
+  {id:"archived",   label:"已归档",   short:"归档", cls:"st-archived",   color:"#8b95a7", stage:5},
+];
+const STATUS_MAP = byId(STATUS);
+/* 看板列（不含归档） */
+const BOARD = ["interested","applied","written","interview","offer","rejected"];
+
+/* 事件类型：drives 表示该事件会自动把投递状态推进到 min(当前, drives) */
+const EVENT_TYPES = [
+  {id:"submit",   label:"投递",       drives:"applied",   tone:"info",  cat:"date"},
+  {id:"screen",   label:"简历通过",   drives:"written",   tone:"ok",    cat:"date"},
+  {id:"written",  label:"笔试/测评",  drives:"written",   tone:"accent",cat:"written"},
+  {id:"interview",label:"面试",       drives:"interview", tone:"hot",   cat:"interview"},
+  {id:"followup", label:"跟进/催进度",drives:null,        tone:"warn",  cat:"date"},
+  {id:"offer",    label:"收到 Offer", drives:"offer",     tone:"ok",    cat:"date"},
+  {id:"rejected", label:"被拒/已挂",  drives:"rejected",  tone:"bad",   cat:"date"},
+  {id:"note",     label:"备注",       drives:null,        tone:"",      cat:"note"},
+];
+const EVENT_MAP = byId(EVENT_TYPES);
+
+const SALARY_UNITS = [
+  {id:"day",   label:"元/天",   perMonth:21.75,   perYear:261},
+  {id:"month", label:"元/月",   perMonth:1,       perYear:12},
+  {id:"year",  label:"元/年",   perMonth:1/12,    perYear:1},
+  {id:"hour",  label:"元/小时", perMonth:21.75*8, perYear:261*8},
+];
+const UNIT_MAP = byId(SALARY_UNITS);
+const DAILY_HOURS = 8, MONTH_DAYS = 21.75;
+
+const LOGO_COLORS = ["#4f46e5","#0284c7","#059669","#d97706","#dc2626","#7c3aed",
+                     "#db2777","#0891b2","#65a30d","#ea580c","#2563eb","#9333ea"];
+
+const WEEK = ["日","一","二","三","四","五","六"];
+
+/* ============================================================
+   2. 图标
+   ============================================================ */
+const ICONS = {
+  home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.6" cy="6" r="1.3"/><circle cx="3.6" cy="12" r="1.3"/><circle cx="3.6" cy="18" r="1.3"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3.2 2"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-2.87 1.2V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3 15a1.7 1.7 0 0 0-1.55-1H1.3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 3 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 7 4.6h.09A1.7 1.7 0 0 0 8.6 3V2.9a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 2.87 1.2 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.09a1.7 1.7 0 0 0 1.55 1h.09a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  moon:'<path d="M20.5 14.3A8.4 8.4 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3z"/>',
+  sun:'<circle cx="12" cy="12" r="4.3"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>',
+  link:'<path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 1 0-5.7-5.7l-1.3 1.3"/><path d="M13.4 10.6a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 1 0 5.7 5.7l1.3-1.3"/>',
+  pin:'<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+  money:'<circle cx="12" cy="12" r="9"/><path d="M8.6 9.4h6.8M8.6 12.6h6.8M12 6.6v10.8"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/>',
+  phone:'<path d="M21 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 1.1 4.2 2 2 0 0 1 3.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L7.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  download:'<path d="M12 3v12M7.5 10.5L12 15l4.5-4.5"/><path d="M4 20h16"/>',
+  upload:'<path d="M12 16V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 20h16"/>',
+  bell:'<path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/>',
+  star:'<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/>',
+  check:'<path d="M20 6.5L9.5 17 4 11.5"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  arrow:'<path d="M9 5l7 7-7 7"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+  trend:'<path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/><path d="M3 12h18"/>',
+  filter:'<path d="M3 5h18l-7 8v6l-4-2v-4z"/>',
+  sort:'<path d="M7 4v16M4 17l3 3 3-3"/><path d="M17 20V4M14 7l3-3 3 3"/>',
+  refresh:'<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/>',
+};
+
+function svg(name, cls){
+  const s = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("viewBox","0 0 24 24");
+  s.setAttribute("fill","none");
+  s.setAttribute("stroke","currentColor");
+  s.setAttribute("stroke-linecap","round");
+  s.setAttribute("stroke-linejoin","round");
+  if(cls) s.setAttribute("class", cls);
+  s.innerHTML = ICONS[name] || ICONS.file;
+  return s;
+}
+
+/* ============================================================
+   3. 通用工具
+   ============================================================ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+function el(tag, opts, kids){
+  const n = document.createElement(tag);
+  const o = opts || {};
+  if(o.cls)   n.className = o.cls;
+  if(o.text != null) n.textContent = o.text;
+  if(o.html != null) n.innerHTML = o.html;
+  if(o.attrs) for(const k in o.attrs){ if(o.attrs[k] != null) n.setAttribute(k, o.attrs[k]); }
+  if(o.style) for(const k in o.style) n.style[k] = o.style[k];
+  if(o.on)    for(const k in o.on) n.addEventListener(k, o.on[k]);
+  if(o.data)  for(const k in o.data) n.dataset[k] = o.data[k];
+  (Array.isArray(kids) ? kids : (kids != null ? [kids] : [])).forEach(c => {
+    if(c == null || c === false) return;
+    n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  });
+  return n;
+}
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild); return n; }
+function uid(p){ return (p || "id") + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+/* --- 日期 --- */
+function todayISO(){ return isoOf(new Date()); }
+function isoOf(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function parseDay(s){
+  if(!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+  if(!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return isNaN(d.getTime()) ? null : d;
+}
+function dayDiff(iso){
+  const d = parseDay(iso);
+  if(!d) return null;
+  const t = parseDay(todayISO());
+  return Math.round((d - t) / DAY);
+}
+function fmtDate(iso){
+  const d = parseDay(iso);
+  if(!d) return "—";
+  return d.getFullYear() + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0");
+}
+function fmtDateShort(iso){
+  const d = parseDay(iso);
+  if(!d) return "—";
+  return (d.getMonth()+1) + "月" + d.getDate() + "日";
+}
+function fmtMonth(iso){
+  const d = parseDay(iso);
+  return d ? (d.getFullYear() + "年" + (d.getMonth()+1) + "月") : "—";
+}
+function weekdayCN(iso){
+  const d = parseDay(iso);
+  return d ? "周" + WEEK[d.getDay()] : "";
+}
+function relFrom(iso){
+  const n = dayDiff(iso);
+  if(n == null) return "";
+  if(n === 0) return "今天";
+  if(n === 1) return "明天";
+  if(n === 2) return "后天";
+  if(n === -1) return "昨天";
+  if(n > 0)  return n + " 天后";
+  return Math.abs(n) + " 天前";
+}
+function clockOf(ts){
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+}
+
+/* --- DOM 小工具 --- */
+function iconBtn(name, title, fn, cls){
+  return el("button", {cls:"btn icon " + (cls||""), attrs:{title:title, "aria-label":title}, on:{click:fn}}, [svg(name)]);
+}
+/* 安全外链：只允许 http/https，其余用文本展示 */
+function safeUrl(u){
+  if(!u) return null;
+  const s = String(u).trim();
+  return /^https?:\/\//i.test(s) ? s : null;
+}
+function linkEl(url, label, cls){
+  const ok = safeUrl(url);
+  if(!ok) return null;
+  return el("a", {cls:cls||"", text:label||url, attrs:{href:ok, target:"_blank", rel:"noopener noreferrer"}});
+}
+
+/* ============================================================
+   4. 薪资解析 / 展示
+   ============================================================ */
+function parseSalary(text){
+  if(!text) return null;
+  const s = String(text).trim();
+  if(!s) return null;
+  const nums = (s.match(/\d+(?:\.\d+)?/g) || []).map(Number).filter(n => n > 0);
+  if(!nums.length) return null;
+  let unit = "month";
+  if(/小时|\/\s*h|hour|时薪/i.test(s)) unit = "hour";
+  else if(/天|日薪|\/\s*d|day/i.test(s)) unit = "day";
+  else if(/年|年薪|\/\s*y|year/i.test(s)) unit = "year";
+  else if(/月|月薪|\/\s*m|month|k\b/i.test(s)) unit = "month";
+
+  const isK = /k/i.test(s) && Math.max.apply(null, nums) < 1000;
+  let v = nums.map(n => isK ? n * 1000 : n);
+  if(v.length >= 2) v = v.slice(0, 2);
+  const factor = (UNIT_MAP[unit] || UNIT_MAP.month).perMonth;
+  return {
+    min: Math.min.apply(null, v) * factor,
+    max: Math.max.apply(null, v) * factor,
+    monthly: (v.reduce((a,b) => a+b, 0) / v.length) * factor,
+  };
+}
+function unitLabel(unit){ return (UNIT_MAP[unit] || UNIT_MAP.month).label; }
+function fmtMoney(n){
+  if(n == null || isNaN(n)) return "—";
+  if(n >= 10000) return (n/10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/,"") + "万";
+  return Math.round(n).toLocaleString("zh-CN");
+}
+function salaryText(app){
+  const parts = [];
+  if(app.salary) parts.push(app.salary);
+  const d = app.salaryDaily;
+  if(d && !parts.length) parts.push("¥" + d + "/天");
+  const m = monthlySalary(app);
+  if(m && !parts.length) parts.push("约 ¥" + fmtMoney(m) + "/月");
+  return parts.length ? parts.join(" · ") : "";
+}
+function monthlySalary(app){
+  if(app.salaryDaily) return Number(app.salaryDaily) * MONTH_DAYS;
+  const p = parseSalary(app.salary);
+  return p ? p.monthly : null;
+}
+function dailyRate(app){
+  if(app.salaryDaily) return Number(app.salaryDaily);
+  const m = monthlySalary(app);
+  return m ? m / MONTH_DAYS : null;
+}
+
+/* ============================================================
+   5. 数据层
+   ============================================================ */
+const DEFAULT_SETTINGS = {theme:"auto", view:"card", daysAhead:14, showArchived:false};
+let state = load();
+function blankState(){
+  return {version:1, apps:[], events:[], settings:Object.assign({}, DEFAULT_SETTINGS)};
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return blankState();
+    const p = JSON.parse(raw);
+    const s = blankState();
+    s.apps = Array.isArray(p.apps) ? p.apps : [];
+    s.events = Array.isArray(p.events) ? p.events : [];
+    s.settings = Object.assign(s.settings, p.settings || {});
+    s.apps.forEach(a => {
+      if(!a.id) a.id = uid("app");
+      if(!STATUS_MAP[a.status]) a.status = "interested";
+      if(a.priority == null) a.priority = 3;
+      a.attachments = Array.isArray(a.attachments) ? a.attachments : [];
+      a.tags = Array.isArray(a.tags) ? a.tags : [];
+    });
+    s.events.forEach(e => {
+      if(!e.id) e.id = uid("ev");
+      if(!EVENT_MAP[e.type]) e.type = "note";
+    });
+    return s;
+  }catch(err){
+    console.warn("读取本地数据失败，已使用空数据", err);
+    return blankState();
+  }
+}
+let saveTimer = null;
+/* 有些环境（部分浏览器的 file:// 、无痕模式、禁用 Cookie）会禁用 localStorage，
+   这里探测一次，探测失败时应用仍可用，只是不落盘，并给出明显提示。 */
+const CAN_PERSIST = (function(){
+  try{
+    const k = "__it_probe__";
+    localStorage.setItem(k, "1");
+    localStorage.removeItem(k);
+    return true;
+  }catch(err){ return false; }
+})();
+function save(){
+  if(!CAN_PERSIST) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 120);
+}
+function flush(){
+  if(!CAN_PERSIST) return false;
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    return true;
+  }catch(err){
+    toast("保存失败：手机存储空间可能已满");
+    console.error(err);
+    return false;
+  }
+}
+
+function appById(id){ return state.apps.find(a => a.id === id) || null; }
+function eventsOf(appId){
+  return state.events.filter(e => e.appId === appId).sort((a,b) => b.ts - a.ts);
+}
+function addEvent(app, ev){
+  const e = Object.assign({id:uid("ev"), appId:app.id, ts:Date.now()}, ev);
+  state.events.push(e);
+  return e;
+}
+function touch(app){ app.updatedAt = Date.now(); }
+
+/* 当前状态：投递记录上存的状态与事件应有的状态取“更靠前”的那个（不回退） */
+function currentStatus(app){
+  const own = STATUS_MAP[app.status] || STATUS_MAP.interested;
+  return own;
+}
+/* 记录一次事件后，是否应推进状态 */
+function statusAfter(app, typeId){
+  const t = EVENT_MAP[typeId];
+  if(!t || !t.drives) return false;
+  const cur = STATUS_MAP[app.status], next = STATUS_MAP[t.drives];
+  if(!cur || !next) return false;
+  if(cur.id === "rejected" || cur.id === "archived") return false;
+  if(next.stage === cur.stage) return false;
+  if(next.id === "rejected") return next.id;         /* 被拒总是可以推进 */
+  if(next.stage > cur.stage) return next.id;
+  return false;
+}
+
+/* 附件（IndexedDB，避免撑爆 localStorage） */
+const Attach = (function(){
+  const DB = "intern-tracker-files", STORE = "files";
+  let dbp = null;
+  function db(){
+    if(dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      if(!("indexedDB" in window)) return rej(new Error("no-idb"));
+      const r = indexedDB.open(DB, 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+      };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    }).catch(err => { dbp = null; throw err; });
+    return dbp;
+  }
+  function tx(mode, fn){
+    return db().then(d => new Promise((res, rej) => {
+      const t = d.transaction(STORE, mode), st = t.objectStore(STORE);
+      const req = fn(st);
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
+    }));
+  }
+  return {
+    put(key, blob){ return tx("readwrite", st => st.put(blob, key)); },
+    get(key){ return tx("readonly", st => st.get(key)); },
+    del(key){ return tx("readwrite", st => st.delete(key)); },
+    keys(){ return tx("readonly", st => st.getAllKeys()).then(k => Array.from(k || [])); },
+    has(){ return db().then(() => true).catch(() => false); }
+  };
+})();
+function blobUrl(blob){ return URL.createObjectURL(blob); }
+
+/* ============================================================
+   6. 关键日期 / 统计
+   ============================================================ */
+const DUE_FIELDS = [
+  {key:"deadline",  label:"投递截止", tone:"danger"},
+  {key:"writtenAt", label:"笔试/测评", tone:"accent"},
+  {key:"interviewAt", label:"面试",   tone:"warn"},
+  {key:"followUpAt", label:"跟进提醒", tone:"info"},
+];
+
+/* 提醒开关：daysAhead 为 "off" 表示永不提醒（总览不显示关键日期与逾期卡片），
+   日期本身照常保存在记录里，随时可以再打开。 */
+function remindersOff(){ return state.settings.daysAhead === "off"; }
+function activeDays(){ return remindersOff() ? 0 : (Number(state.settings.daysAhead) || 14); }
+
+function upcoming(limitDays){
+  if(remindersOff()) return [];
+  const out = [];
+  state.apps.forEach(a => {
+    if(a.status === "rejected" || a.status === "archived") return;
+    DUE_FIELDS.forEach(f => {
+      const v = a[f.key];
+      if(!v) return;
+      const n = dayDiff(v);
+      if(n == null || n < 0) return;
+      if(limitDays != null && n > limitDays) return;
+      out.push({app:a, field:f.key, label:f.label, date:v, days:n, tone:f.tone});
+    });
+  });
+  return out.sort((x,y) => x.days - y.days || x.app.company.localeCompare(y.app.company,"zh"));
+}
+function overdue(){
+  if(remindersOff()) return [];
+  const out = [];
+  state.apps.forEach(a => {
+    if(a.status === "rejected" || a.status === "archived" || a.status === "offer") return;
+    DUE_FIELDS.forEach(f => {
+      const v = a[f.key];
+      if(!v) return;
+      const n = dayDiff(v);
+      if(n == null || n >= 0) return;
+      out.push({app:a, label:f.label, date:v, days:n, tone:f.tone});
+    });
+  });
+  return out.sort((x,y) => y.days - x.days);
+}
+function stats(){
+  const s = {total:state.apps.length, byStatus:{}, interview:0, offer:0, rejected:0,
+             applied:0, active:0, noReply:0, subs:0, evCount:state.events.length};
+  STATUS.forEach(st => s.byStatus[st.id] = 0);
+  state.apps.forEach(a => {
+    s.byStatus[a.status] = (s.byStatus[a.status] || 0) + 1;
+    const st = STATUS_MAP[a.status];
+    if(st && st.stage >= 0) s.applied++;
+    if(a.status === "offer") s.offer++;
+    else if(a.status === "rejected") s.rejected++;
+    if(a.status === "interview" || a.status === "offer") s.interview++;
+    if(!["rejected","offer","archived"].includes(a.status)) s.active++;
+    if(a.status === "applied"){
+      const last = eventsOf(a.id)[0];
+      const daysSince = last ? Math.floor((Date.now() - last.ts)/DAY) : null;
+      if(daysSince != null && daysSince >= 7) s.noReply++;
+    }
+  });
+  s.subs = state.events.filter(e => e.type === "submit").length;
+  const base = s.subs || s.applied || 1;
+  s.rateInterview = Math.round(s.interview / base * 100);
+  s.rateOffer = Math.round(s.offer / base * 100);
+  return s;
+}
+function salaryList(){
+  return state.apps.map(monthlySalary).filter(n => n && n > 0).sort((a,b) => a - b);
+}
+function colorOf(name){
+  let h = 0;
+  for(let i = 0; i < (name||"").length; i++) h = (h*31 + name.charCodeAt(i)) >>> 0;
+  return LOGO_COLORS[h % LOGO_COLORS.length];
+}
+function initialOf(name){
+  const s = String(name||"?").trim();
+  if(!s) return "?";
+  const m = /^[A-Za-z]/.exec(s);
+  return m ? m[0].toUpperCase() : s[0];
+}
+function sortApps(list){
+  const sv = state.settings.sort || "updated";
+  const arr = list.slice();
+  arr.sort((a,b) => {
+    if(sv === "priority") return (b.priority||0) - (a.priority||0) || b.updatedAt - a.updatedAt;
+    if(sv === "salary")   return (monthlySalary(b)||0) - (monthlySalary(a)||0);
+    if(sv === "deadline"){
+      const na = nearestDue(a), nb = nearestDue(b);
+      return (na == null ? 9e9 : na) - (nb == null ? 9e9 : nb);
+    }
+    if(sv === "company")  return String(a.company).localeCompare(String(b.company),"zh");
+    if(sv === "status")   return (STATUS_MAP[a.status]||{}).stage - (STATUS_MAP[b.status]||{}).stage;
+    return (b.updatedAt||0) - (a.updatedAt||0);
+  });
+  return arr;
+}
+function nearestDue(app){
+  let best = null;
+  DUE_FIELDS.forEach(f => {
+    const n = dayDiff(app[f.key]);
+    if(n == null || n < 0) return;
+    if(best == null || n < best) best = n;
+  });
+  return best;
+}
+function dueTag(iso, label){
+  const n = dayDiff(iso);
+  if(n == null) return null;
+  const cls = n <= 2 ? "due soon" : (n <= 7 ? "due near" : "due");
+  return el("span", {cls:cls, text:(n === 0 ? "今天" : n + "天后") + " " + (label||"")});
+}
+
+/* ============================================================
+   7. Toast
+   ============================================================ */
+let toastTimer = null;
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* ============================================================
+   8. 路由 / 外壳
+   ============================================================ */
+const TABS = [
+  {id:"dash",     label:"总览", icon:"home"},
+  {id:"list",     label:"投递", icon:"list"},
+  {id:"timeline", label:"动态", icon:"clock"},
+  {id:"stats",    label:"统计", icon:"chart"},
+  {id:"settings", label:"设置", icon:"gear"},
+];
+const route = {name:"dash", appId:null, detailTab:"info"};
+
+function buildShell(){
+  const tb = clear($("#tabbar"));
+  TABS.forEach(t => {
+    tb.appendChild(el("button", {
+      attrs:{role:"tab", id:"tab-" + t.id, "aria-selected":"false", "aria-controls":"view-" + t.id},
+      on:{click:() => go(t.id)}
+    }, [svg(t.icon), el("span", {text:t.label})]));
+  });
+
+  $("#btnTheme").appendChild(svg("moon"));
+  $("#btnTheme").addEventListener("click", toggleTheme);
+  $("#btnBack").appendChild(svg("back"));
+  $("#btnBack").addEventListener("click", () => go("list"));
+  const fab = $("#fab");
+  fab.appendChild(svg("plus"));
+  fab.addEventListener("click", () => openAppForm(null));
+
+  $("#sheetClose").appendChild(svg("close"));
+  $("#sheetClose").addEventListener("click", closeSheet);
+  $("#overlay").addEventListener("mousedown", e => { if(e.target === $("#overlay")) closeSheet(); });
+  const lb = $("#lightbox");
+  lb.addEventListener("click", () => lb.classList.remove("open"));
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){
+      if(lb.classList.contains("open")) lb.classList.remove("open");
+      else if($("#overlay").classList.contains("open")) closeSheet();
+    }
+  });
+
+  applyTheme();
+  go("dash");
+}
+
+function go(name, appId){
+  if(name === "detail"){ route.name = "detail"; route.appId = appId; }
+  else { route.name = name; route.appId = null; route.detailTab = "info"; }
+  if(name !== "settings" && name !== "detail") $("#btnBack").hidden = true;
+  render();
+  window.scrollTo({top:0, behavior:"auto"});
+}
+function render(){
+  const name = route.name;
+  $$(".view").forEach(v => v.classList.remove("active"));
+  const view = $("#view-" + (name === "detail" ? "detail" : name));
+  if(view) view.classList.add("active");
+
+  TABS.forEach(t => {
+    const b = $("#tab-" + t.id);
+    if(b) b.setAttribute("aria-selected", String(t.id === name));
+  });
+
+  const titles = {dash:"总览", list:"投递记录", timeline:"动态时间线", stats:"数据统计", settings:"设置"};
+  const titlesDetail = {detail: appById(route.appId) ? appById(route.appId).company : "详情"};
+  const isDetail = name === "detail";
+  $("#viewTitle").textContent = isDetail ? titlesDetail.detail : (titles[name] || "实习投递管家");
+  $("#btnBack").hidden = !isDetail;
+  $("#fab").style.display = (name === "settings") ? "none" : "grid";
+
+  const renderers = {dash:renderDash, list:renderList, timeline:renderTimeline,
+                     stats:renderStats, settings:renderSettings, detail:renderDetail};
+  const fn = renderers[name] || renderDash;
+  clear(view);
+  fn(view);
+
+  const sub = $("#viewSub");
+  if(name === "list"){
+    const n = filterApps().length;
+    sub.textContent = "共 " + state.apps.length + " 家公司" + (n !== state.apps.length ? " · 筛选出 " + n + " 条" : "");
+  } else if(name === "timeline"){
+    sub.textContent = state.events.length + " 条动态";
+  } else if(name === "stats"){
+    sub.textContent = "投递效率与薪资分布";
+  } else if(isDetail){
+    const a = appById(route.appId);
+    sub.textContent = a ? (a.position || "未填岗位") : "";
+  } else if(name === "dash"){
+    if(remindersOff()){
+      sub.textContent = "已关闭提醒 · 本地数据不上传";
+    } else {
+      const u = upcoming(activeDays()).length;
+      sub.textContent = u ? (u + " 项 " + activeDays() + " 天内到期") : "本地数据 · 不上传云端";
+    }
+  } else {
+    sub.textContent = "数据只存在本机浏览器";
+  }
+}
+
+/* ============================================================
+   9. 主题
+   ============================================================ */
+function applyTheme(){
+  const pref = (state.settings && state.settings.theme) || "auto";
+  const dark = pref === "dark" ||
+    (pref === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  const m = $('meta[name="theme-color"]');
+  if(m) m.setAttribute("content", dark ? "#0d1017" : "#ffffff");
+  const b = $("#btnTheme");
+  if(b){ clear(b); b.appendChild(svg(dark ? "sun" : "moon")); }
+}
+function toggleTheme(){
+  const wasDark = document.documentElement.getAttribute("data-theme") === "dark";
+  state.settings.theme = wasDark ? "light" : "dark";
+  save();
+  applyTheme();
+  toast(wasDark ? "已切到浅色" : "已切到深色");
+}
+(function watchSystemTheme(){
+  try{
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const fn = () => { if((state.settings.theme || "auto") === "auto") applyTheme(); };
+    if(mq.addEventListener) mq.addEventListener("change", fn);
+    else if(mq.addListener) mq.addListener(fn);
+  }catch(err){ /* 老浏览器忽略即可 */ }
+})();
+
+/* ============================================================
+   10. 弹层（Sheet）
+   ============================================================ */
+let sheetOnClose = null;
+function openSheet(title, body, footer, onClose){
+  $("#sheetTitle").textContent = title;
+  const b = clear($("#sheetBody"));
+  if(typeof body === "string") b.innerHTML = body; else b.appendChild(body);
+  const f = clear($("#sheetFoot"));
+  if(footer){
+    f.classList.remove("hidden");
+    (Array.isArray(footer) ? footer : [footer]).forEach(x => f.appendChild(x));
+  } else {
+    f.classList.add("hidden");
+  }
+  sheetOnClose = onClose || null;
+  $("#overlay").classList.add("open");
+  $("#sheet").scrollTop = 0;
+  document.body.style.overflow = "hidden";
+}
+function closeSheet(){
+  const cb = sheetOnClose;
+  sheetOnClose = null;
+  $("#overlay").classList.remove("open");
+  document.body.style.overflow = "";
+  if(cb) cb();
+}
+function confirmSheet(title, message, okLabel, onOk, danger){
+  const p = el("div", {text:message, style:{fontSize:"14px", lineHeight:"1.7", color:"var(--text-2)"}});
+  openSheet(title, p, [
+    el("button", {cls:"btn", text:"取消", on:{click:closeSheet}}),
+    el("button", {cls:"btn " + (danger ? "danger" : "primary"), text:okLabel, on:{click:() => { closeSheet(); onOk(); }}}),
+  ]);
+}
+
+/* ============================================================
+   11. 视图：总览
+   ============================================================ */
+function renderDash(root){
+  const s = stats();
+  const up = upcoming(activeDays());
+  const over = overdue();
+
+  /* 存储不可用时的高优先提示：数据不会保存 */
+  if(!CAN_PERSIST){
+    root.appendChild(el("div", {cls:"alert danger"}, [
+      svg("bell"),
+      el("div", {cls:"grow"}, [
+        el("b", {text:"这个环境无法保存数据。"}),
+        el("div", {text:"当前浏览器（可能是无痕模式或 file:// 限制）禁用了本地存储，刷新页面后记录会丢失。请用普通模式打开，或改用静态托管的网址访问。"}),
+        el("button", {cls:"btn sm ghost mt8", on:{click:exportJSON}}, [svg("download"), el("span", {text:"先导出 JSON 保住数据"})]),
+      ]),
+    ]));
+  }
+
+  /* 概览数字 */
+  const grid = el("div", {cls:"stats-grid mb12"});
+  const cards = [
+    {v:state.apps.length, k:"在库公司", cls:""},
+    {v:s.active,          k:"进行中",   cls:"accent"},
+    {v:s.interview,       k:"进入面试", cls:"warn"},
+    {v:s.offer,           k:"Offer",    cls:"ok"},
+  ];  cards.forEach(c => grid.appendChild(
+    el("div", {cls:"stat " + c.cls}, [
+      el("div", {cls:"v", text:String(c.v)}),
+      el("div", {cls:"k", text:c.k}),
+    ])
+  ));
+  root.appendChild(grid);
+
+  /* 状态看板 */
+  const board = el("div", {cls:"card"});
+  board.appendChild(el("div", {cls:"card-h"}, [
+    svg("target"), el("span", {text:"投递看板"}),
+    el("span", {cls:"count", text:"点击筛选"}),
+  ]));
+  const boardRow = el("div", {cls:"row wrap", style:{gap:"7px"}});
+  BOARD.forEach(id => {
+    const st = STATUS_MAP[id], n = s.byStatus[id] || 0;
+    boardRow.appendChild(el("button", {
+      cls:"pill " + st.cls,
+      style:{fontSize:"12.5px", padding:"6px 11px", opacity: n ? "1" : ".5"},
+      on:{click:() => { state.settings.filter = (state.settings.filter === id ? "all" : id); save(); go("list"); }}
+    }, [el("span", {text:st.label}), el("b", {text:String(n)})]));
+  });
+  board.appendChild(boardRow);
+  root.appendChild(board);
+
+  /* 逾期提醒 */
+  if(over.length){
+    const c = el("div", {cls:"card"});
+    c.appendChild(el("div", {cls:"card-h"}, [
+      svg("bell"), el("span", {text:"已过关键日期"}), el("span", {cls:"count", text:over.length + " 项"}),
+    ]));
+    over.slice(0,5).forEach(o => c.appendChild(dueRow(o, true)));
+    root.appendChild(c);
+  }
+
+  /* 近期关键日期（在 设置 里选「永不」时整块隐藏） */
+  if(!remindersOff()){
+    const uc = el("div", {cls:"card"});
+    uc.appendChild(el("div", {cls:"card-h"}, [
+      svg("cal"), el("span", {text:activeDays() + " 天内关键日期"}),
+      el("span", {cls:"count", text:up.length + " 项"}),
+    ]));
+    if(!up.length){
+      uc.appendChild(el("div", {cls:"dim small", style:{padding:"10px 2px"},
+        text:"暂无临近的截止日 / 笔试 / 面试。在记录里填上日期就会出现在这里。"}));
+    } else {
+      up.slice(0,8).forEach(o => uc.appendChild(dueRow(o, false)));
+    }
+    root.appendChild(uc);
+  }
+
+  /* 最近动态 */
+  const recent = state.events.slice().sort((a,b) => b.ts - a.ts).slice(0,6);
+  if(recent.length){
+    const rc = el("div", {cls:"card"});
+    rc.appendChild(el("div", {cls:"card-h"}, [
+      svg("clock"), el("span", {text:"最近动态"}),
+      el("button", {cls:"btn sm ghost", text:"全部", on:{click:() => go("timeline")}}),
+    ]));
+    const tl = el("div", {cls:"tl"});
+    recent.forEach(e => tl.appendChild(eventItem(e, false)));
+    rc.appendChild(tl);
+    root.appendChild(rc);
+  }
+
+  /* 安装状态提示：只在“没装、能装、而且 Service Worker 已经接管”时出现 */
+  const pst = PWA.state();
+  const swReady = ("serviceWorker" in navigator) && !!navigator.serviceWorker.controller;
+  if(pst === "ready" && swReady){
+    root.appendChild(el("div", {cls:"row wrap", style:{gap:"7px", padding:"2px 4px 6px"}}, [
+      el("span", {cls:"tag accent", text:"可安装到桌面"}),
+      el("span", {cls:"tiny dim", text:"设置 → 装到手机桌面"}),
+      el("button", {cls:"btn sm ghost", text:"去看看", on:{click:() => go("settings")}}),
+    ]));
+  }
+
+  if(!state.apps.length){
+    const e = el("div", {cls:"empty"}, [
+      el("div", {cls:"ico", text:"🎯"}),
+      el("h3", {text:"还没有投递记录"}),
+      el("p", {text:"点右下角的 + 添加第一家公司。公司名、地点、薪资、工作要求、投递链接、截止日期都可以记下来。"}),
+      el("div", {cls:"mt16"}, [el("button", {cls:"btn primary", text:"添加第一家公司",
+        on:{click:() => openAppForm(null)}})]),
+    ]);
+    root.appendChild(e);
+  }
+}
+function dueRow(o, isOver){
+  const st = STATUS_MAP[o.app.status] || STATUS_MAP.interested;
+  return el("div", {
+    cls:"row", style:{padding:"9px 0", borderBottom:"1px solid var(--border)", gap:"10px", cursor:"pointer"},
+    on:{click:() => go("detail", o.app.id)}
+  }, [
+    el("div", {cls:"grow", style:{minWidth:"0"}}, [
+      el("div", {cls:"row", style:{gap:"6px"}}, [
+        el("span", {cls:"bold truncate", text:o.app.company, style:{fontSize:"14px"}}),
+        el("span", {cls:"pill " + st.cls, text:st.short}),
+      ]),
+      el("div", {cls:"tiny dim", text:o.label + " · " + fmtDate(o.date) + " " + weekdayCN(o.date)}),
+    ]),
+    el("div", {cls:"center", style:{flex:"none"}}, [
+      el("div", {cls:(isOver ? "due soon" : "due") + " tiny", text:(isOver ? "逾期 " + Math.abs(o.days) + " 天" : relFrom(o.date))}),
+    ]),
+    svg("arrow", "chev"),
+  ]);
+}
+
+/* ============================================================
+   12. 视图：投递列表
+   ============================================================ */
+function filterApps(){
+  const q = (state.settings.q || "").trim().toLowerCase();
+  const f = state.settings.filter || "all";
+  const showArch = !!state.settings.showArchived;
+  let list = state.apps.filter(a => {
+    if(!showArch && a.status === "archived" && f !== "archived") return false;
+    if(f !== "all" && a.status !== f) return false;
+    if(!q) return true;
+    const hay = [a.company, a.position, a.location, a.notes, a.requirements, a.jd,
+                 a.contactName, a.contactInfo, (a.tags||[]).join(" ")].join(" ").toLowerCase();
+    return hay.indexOf(q) >= 0;
+  });
+  return sortApps(list);
+}
+function renderList(root){
+  /* 搜索 + 筛选 */
+  const bar = el("div", {cls:"toolbar"});
+  const search = el("div", {cls:"search"});
+  search.appendChild(svg("search"));
+  const input = el("input", {attrs:{type:"search", placeholder:"搜公司 / 岗位 / 城市 / 备注…", value:state.settings.q || ""}});
+  const results = el("div", {cls:"tiny dim", style:{marginBottom:"9px"}});
+  let qt = null;
+  input.addEventListener("input", () => {
+    state.settings.q = input.value;
+    clearTimeout(qt);
+    qt = setTimeout(() => {
+      const n = filterApps().length;
+      results.textContent = input.value.trim() ? ("找到 " + n + " 条匹配") : "";
+      renderListBody(bodyWrap);
+      const sub = $("#viewSub");
+      sub.textContent = input.value.trim() ? ("匹配 " + n + " 条 / 共 " + state.apps.length + " 家") : ("共 " + state.apps.length + " 家公司");
+    }, 160);
+  });
+  search.appendChild(input);
+  bar.appendChild(search);
+  bar.appendChild(el("button", {cls:"btn ghost", attrs:{title:"排序"}, on:{click:openSortSheet}}, [svg("sort"), el("span", {cls:"tiny", text:sortLabel()})]));
+  root.appendChild(bar);
+
+  /* 状态分段 */
+  const seg = el("div", {cls:"seg mb12"});
+  const all = [{id:"all", label:"全部"}].concat(STATUS.map(s => ({id:s.id, label:s.label})));
+  all.forEach(o => {
+    seg.appendChild(el("button", {
+      attrs:{"aria-pressed": String((state.settings.filter || "all") === o.id)},
+      text:o.label,
+      on:{click:() => { state.settings.filter = o.id; save(); render(); }}
+    }));
+  });
+  root.appendChild(seg);
+
+  const bodyWrap = el("div", {cls:"card pad0 list-wrap"});
+  root.appendChild(bodyWrap);
+  renderListBody(bodyWrap);
+
+  if(state.apps.length && !filterApps().length){
+    root.appendChild(el("div", {cls:"empty"}, [
+      el("div", {cls:"ico", text:"🔍"}),
+      el("h3", {text:"没有匹配的记录"}),
+      el("p", {text:"换个关键词，或把状态筛选切回「全部」。"}),
+    ]));
+  }
+}
+function sortLabel(){
+  const m = {updated:"最近更新", priority:"心动指数", deadline:"临近截止", salary:"薪资", company:"公司名", status:"流程进度"};
+  return m[state.settings.sort || "updated"] || "最近更新";
+}
+function openSortSheet(){
+  const opts = [
+    ["updated","最近更新"], ["priority","心动指数"], ["deadline","临近截止"],
+    ["salary","薪资高低"], ["company","公司名"], ["status","流程进度"],
+  ];
+  const wrap = el("div");
+  opts.forEach(([id, label]) => {
+    wrap.appendChild(el("button", {
+      cls:"btn block mb8", style:{justifyContent:"space-between"},
+      on:{click:() => { state.settings.sort = id; save(); closeSheet(); render(); }}
+    }, [el("span", {text:label}), (state.settings.sort || "updated") === id ? svg("check") : null]));
+  });
+  wrap.appendChild(el("label", {cls:"row", style:{marginTop:"8px", gap:"8px", fontSize:"13px"}},
+    [el("input", {attrs:{type:"checkbox", ...(state.settings.showArchived ? {checked:"checked"} : {})},
+      on:{change:e => { state.settings.showArchived = e.target.checked; save(); closeSheet(); render(); }},
+      style:{width:"auto"}}),
+     el("span", {text:"显示已归档的公司"})]));
+  openSheet("排序方式", wrap);
+}
+function renderListBody(wrap){
+  clear(wrap);
+  const list = filterApps();
+  if(!list.length){
+    if(!state.apps.length){
+      wrap.appendChild(el("div", {cls:"empty"}, [
+        el("div", {cls:"ico", text:"📋"}),
+        el("h3", {text:"记录是空的"}),
+        el("p", {text:"用右下角的 + 添加投递记录，之后就能在这里筛选、排序、对比。"}),
+      ]));
+    }
+    return;
+  }
+  const box = el("div", {cls:"app-list"});
+  list.forEach(a => box.appendChild(appRow(a)));
+  wrap.appendChild(box);
+}
+function appRow(a){
+  const st = STATUS_MAP[a.status] || STATUS_MAP.interested;
+  const due = nearestDue(a);
+  const meta = el("div", {cls:"meta"});
+  if(a.location) meta.appendChild(el("i", {}, [svg("pin"), el("span", {text:a.location})]));
+  const sal = salaryText(a);
+  if(sal) meta.appendChild(el("i", {}, [svg("money"), el("span", {text:sal})]));
+  if(a.priority) meta.appendChild(el("i", {cls:"stars sm readonly"}, starRow(a.priority, true)));
+  if(due != null){
+    meta.appendChild(el("i", {cls:"due " + (due <= 2 ? "soon" : due <= 7 ? "near" : "")},
+      [svg("cal"), el("span", {text:due === 0 ? "今天到期" : due + " 天后有安排"})]));
+  }
+  const tags = el("div", {cls:"row wrap", style:{gap:"5px", marginTop:"6px"}});
+  tags.appendChild(el("span", {cls:"pill " + st.cls, text:st.label}));
+  (a.tags || []).slice(0,3).forEach(t => tags.appendChild(el("span", {cls:"tag", text:t})));
+  if((a.attachments || []).length) tags.appendChild(el("span", {cls:"tag", text:"📎 " + a.attachments.length}));
+
+  return el("div", {cls:"app-item", on:{click:() => go("detail", a.id)}}, [
+    el("div", {cls:"logo", style:{background:colorOf(a.company)}, text:initialOf(a.company)}),
+    el("div", {cls:"grow"}, [
+      el("div", {cls:"nm", text:a.company}),
+      el("div", {cls:"pos", text:a.position || "未填岗位"}),
+      tags, meta,
+    ]),
+    svg("arrow", "dim"),
+  ]);
+}
+function starRow(n, readonly){
+  const box = el("span", {cls:"stars" + (readonly ? " readonly" : "")});
+  for(let i = 1; i <= 5; i++){
+    const b = el("button", {attrs:{type:"button", "aria-label":i + " 星"},
+      on:{click: e => { e.stopPropagation(); if(!readonly && box._onPick) box._onPick(i); }}}, [svg("star")]);
+    if(i <= n) b.classList.add("on");
+    box.appendChild(b);
+  }
+  return box;
+}
+
+/* ============================================================
+   13. 视图：动态时间线
+   ============================================================ */
+function renderTimeline(root){
+  const apps = state.apps.slice().sort((a,b) => String(a.company).localeCompare(String(b.company),"zh"));
+  const f = state.settings.tlApp || "all";
+
+  const seg = el("div", {cls:"seg mb12"});
+  seg.appendChild(el("button", {
+    attrs:{"aria-pressed": String(f === "all")}, text:"全部公司",
+    on:{click:() => { state.settings.tlApp = "all"; save(); render(); }}
+  }));
+  apps.forEach(a => seg.appendChild(el("button", {
+    attrs:{"aria-pressed": String(f === a.id)}, text:a.company,
+    on:{click:() => { state.settings.tlApp = a.id; save(); render(); }}
+  })));
+  root.appendChild(seg);
+
+  let evs = state.events.slice();
+  if(f !== "all") evs = evs.filter(e => e.appId === f);
+  evs.sort((a,b) => b.ts - a.ts);
+
+  if(!evs.length){
+    root.appendChild(el("div", {cls:"empty"}, [
+      el("div", {cls:"ico", text:"🕒"}),
+      el("h3", {text:"还没有动态"}),
+      el("p", {text:"投递、笔试、每轮面试、Offer、被拒都可以记一条。打开某家公司的详情页，点「记一条动态」。"}),
+    ]));
+    return;
+  }
+
+  /* 按“天”分组 */
+  const groups = [];
+  let cur = null;
+  evs.forEach(e => {
+    const d = isoOf(new Date(e.ts));
+    if(!cur || cur.day !== d){ cur = {day:d, items:[]}; groups.push(cur); }
+    cur.items.push(e);
+  });
+
+  let lastMonth = "";
+  groups.forEach(g => {
+    const m = fmtMonth(g.day);
+    if(m !== lastMonth){
+      lastMonth = m;
+      root.appendChild(el("div", {cls:"sec-title"}, [svg("cal"), el("span", {text:m})]));
+    }
+    const card = el("div", {cls:"card"});
+    card.appendChild(el("div", {cls:"card-h"}, [
+      el("span", {text:fmtDateShort(g.day) + " " + weekdayCN(g.day)}),
+      el("span", {cls:"count", text:relFrom(g.day)}),
+    ]));
+    const tl = el("div", {cls:"tl"});
+    g.items.forEach(e => tl.appendChild(eventItem(e, true)));
+    card.appendChild(tl);
+    root.appendChild(card);
+  });
+}
+function eventItem(e, showApp){
+  const app = appById(e.appId);
+  const t = EVENT_MAP[e.type] || EVENT_MAP.note;
+  const toneCls = {ok:"ok", bad:"bad", hot:"hot", warn:"hot", info:"", accent:"", "":""}[t.tone] || "";
+  const head = el("div", {cls:"tl-head"});
+  head.appendChild(el("span", {cls:"t", text:t.label + (e.round ? "（" + e.round + "）" : "")}));
+  if(showApp && app) head.appendChild(el("span", {
+    cls:"tag accent", text:app.company, style:{cursor:"pointer"},
+    on:{click:() => go("detail", app.id)}
+  }));
+  head.appendChild(el("span", {cls:"d", text:fmtDateShort(e.date || isoOf(new Date(e.ts))) + " " + clockOf(e.ts)}));
+  if(e.toStatus && STATUS_MAP[e.toStatus]) head.appendChild(el("span", {cls:"pill " + STATUS_MAP[e.toStatus].cls, text:STATUS_MAP[e.toStatus].label}));
+
+  const parts = [head];
+  const bits = [];
+  if(e.mode) bits.push("形式：" + e.mode);
+  if(e.interviewer) bits.push("面试官：" + e.interviewer);
+  if(e.result) bits.push("结果：" + e.result);
+  if(bits.length) parts.push(el("div", {cls:"tl-body", text:bits.join("　")}));
+  if(e.note) parts.push(el("div", {cls:"tl-body", text:e.note}));
+
+  const acts = el("div", {cls:"tl-actions no-print"});
+  acts.appendChild(iconBtn("edit", "编辑", () => openEventForm(e.appId, e)));
+  acts.appendChild(iconBtn("trash", "删除", () => {
+    confirmSheet("删除这条动态？", "删除后无法恢复，但不会影响公司的其他记录。", "删除", () => {
+      state.events = state.events.filter(x => x.id !== e.id);
+      save(); render(); toast("已删除");
+    }, true);
+  }));
+  parts.push(acts);
+
+  return el("div", {cls:"tl-item " + toneCls}, parts);
+}
+
+/* ============================================================
+   14. 视图：统计
+   ============================================================ */
+function renderStats(root){
+  const s = stats();
+  if(!state.apps.length){
+    root.appendChild(el("div", {cls:"empty"}, [
+      el("div", {cls:"ico", text:"📊"}),
+      el("h3", {text:"还没有数据"}),
+      el("p", {text:"先添加几条投递记录，这里会自动算出投递量、面试转化率、状态分布和薪资分布。"}),
+    ]));
+    return;
+  }
+  const grid = el("div", {cls:"stats-grid"});
+  [
+    {v:state.apps.length, k:"投递总数", cls:""},
+    {v:s.rateInterview + "%", k:"面试率（面试/投递）", cls:"accent"},
+    {v:s.rateOffer + "%", k:"Offer 率", cls:"ok"},
+    {v:s.noReply, k:"投出去 7 天没动静", cls:"warn"},
+  ].forEach(c => grid.appendChild(el("div", {cls:"stat " + c.cls}, [
+    el("div", {cls:"v", text:String(c.v)}), el("div", {cls:"k", text:c.k}),
+  ])));
+  root.appendChild(grid);
+
+  /* 状态分布 */
+  const maxN = Math.max.apply(null, STATUS.map(x => s.byStatus[x.id] || 0).concat([1]));
+  const c1 = el("div", {cls:"card"});
+  c1.appendChild(el("div", {cls:"card-h"}, [svg("target"), el("span", {text:"状态分布"})]));
+  STATUS.forEach(st => {
+    const n = s.byStatus[st.id] || 0;
+    c1.appendChild(el("div", {cls:"bar-row"}, [
+      el("span", {cls:"lb", text:st.short}),
+      el("span", {cls:"bar-track"}, [
+        el("span", {cls:"bar-fill", style:{width:(n / maxN * 100) + "%", background:st.color}}),
+      ]),
+      el("span", {cls:"vl", text:String(n)}),
+    ]));
+  });
+  root.appendChild(c1);
+
+  /* 流程转化漏斗 */
+  const funnel = [
+    {k:"进入流程（已投+）", v:STATUS.filter(x => x.stage >= 0 && x.id !== "archived").reduce((a,x) => a + (s.byStatus[x.id]||0), 0)},
+    {k:"到笔试", v:["written","interview","offer"].reduce((a,x) => a + (s.byStatus[x]||0), 0)},
+    {k:"到面试", v:["interview","offer"].reduce((a,x) => a + (s.byStatus[x]||0), 0)},
+    {k:"拿 Offer", v:s.byStatus.offer || 0},
+  ];
+  const c2 = el("div", {cls:"card"});
+  c2.appendChild(el("div", {cls:"card-h"}, [svg("trend"), el("span", {text:"流程转化"})]));
+  const fmax = Math.max.apply(null, funnel.map(f => f.v).concat([1]));
+  funnel.forEach(f => {
+    c2.appendChild(el("div", {cls:"bar-row"}, [
+      el("span", {cls:"lb", text:f.k.replace(/（.*?）/,""), style:{width:"86px"}}),
+      el("span", {cls:"bar-track"}, [el("span", {cls:"bar-fill", style:{width:(f.v / fmax * 100) + "%", background:"var(--accent)"}})]),
+      el("span", {cls:"vl", text:String(f.v)}),
+    ]));
+  });
+  root.appendChild(c2);
+
+  /* 薪资分布 */
+  const c3 = el("div", {cls:"card"});
+  c3.appendChild(el("div", {cls:"card-h"}, [svg("money"), el("span", {text:"薪资分布（折算月薪）"})]));
+  const sal = salaryList();
+  if(sal.length < 1){
+    c3.appendChild(el("div", {cls:"dim small", text:"还没有填薪资。填了「薪资文本」或「日薪」后，这里会自动折算成月薪做对比。"}));
+  } else {
+    const sum = sal.reduce((a,b) => a + b, 0);
+    c3.appendChild(el("div", {cls:"row wrap mb12", style:{gap:"8px"}}, [
+      el("span", {cls:"tag accent", text:"平均 ¥" + fmtMoney(sum / sal.length) + "/月"}),
+      el("span", {cls:"tag info", text:"最高 ¥" + fmtMoney(sal[sal.length-1]) + "/月"}),
+      el("span", {cls:"tag", text:"最低 ¥" + fmtMoney(sal[0]) + "/月"}),
+      el("span", {cls:"tag ok", text:"折合日均 ¥" + fmtMoney(sum / sal.length / MONTH_DAYS)}),
+      el("span", {cls:"tag", text:"样本 " + sal.length + " 家"}),
+    ]));
+    const top = state.apps.map(a => ({a:a, m:monthlySalary(a)})).filter(x => x.m).sort((x,y) => y.m - x.m);
+    const mx = top[0].m;
+    top.slice(0,8).forEach(x => {
+      c3.appendChild(el("div", {cls:"bar-row"}, [
+        el("span", {cls:"lb truncate", text:x.a.company, style:{width:"76px"}}),
+        el("span", {cls:"bar-track"}, [el("span", {cls:"bar-fill", style:{width:(x.m / mx * 100) + "%", background:colorOf(x.a.company)}})]),
+        el("span", {cls:"vl", text:fmtMoney(x.m), style:{width:"46px"}}),
+      ]));
+    });
+  }
+  root.appendChild(c3);
+
+  /* 城市分布 */
+  const cityMap = {};
+  state.apps.forEach(a => { const c = (a.location || "未填").trim() || "未填"; cityMap[c] = (cityMap[c]||0)+1; });
+  const cities = Object.entries(cityMap).sort((a,b) => b[1]-a[1]).slice(0,8);
+  if(cities.length){
+    const c4 = el("div", {cls:"card"});
+    c4.appendChild(el("div", {cls:"card-h"}, [svg("pin"), el("span", {text:"城市分布"})]));
+    const cmax = cities[0][1];
+    cities.forEach(([city, n]) => {
+      c4.appendChild(el("div", {cls:"bar-row"}, [
+        el("span", {cls:"lb truncate", text:city, style:{width:"76px"}}),
+        el("span", {cls:"bar-track"}, [el("span", {cls:"bar-fill", style:{width:(n/cmax*100)+"%", background:"var(--info)"}})]),
+        el("span", {cls:"vl", text:String(n)}),
+      ]));
+    });
+    root.appendChild(c4);
+  }
+
+  /* 月度投递量 */
+  const byMonth = {};
+  state.events.filter(e => e.type === "submit").forEach(e => {
+    const k = fmtMonth(e.date || isoOf(new Date(e.ts)));
+    byMonth[k] = (byMonth[k]||0)+1;
+  });
+  const months = Object.entries(byMonth).sort((a,b) => a[0] < b[0] ? -1 : 1);
+  if(months.length){
+    const c5 = el("div", {cls:"card"});
+    c5.appendChild(el("div", {cls:"card-h"}, [svg("chart"), el("span", {text:"每月投递量"})]));
+    const mmax = Math.max.apply(null, months.map(m => m[1]));
+    months.forEach(([m, n]) => {
+      c5.appendChild(el("div", {cls:"bar-row"}, [
+        el("span", {cls:"lb", text:m.replace(/^\d{4}年/,""), style:{width:"60px"}}),
+        el("span", {cls:"bar-track"}, [el("span", {cls:"bar-fill", style:{width:(n/mmax*100)+"%", background:"var(--ok)"}})]),
+        el("span", {cls:"vl", text:String(n)}),
+      ]));
+    });
+    root.appendChild(c5);
+  }
+}
+
+/* ============================================================
+   15. 视图：设置
+   ============================================================ */
+function renderSettings(root){
+  /* 外观 */
+  const c1 = el("div", {cls:"card"});
+  c1.appendChild(el("div", {cls:"card-h"}, [svg("sun"), el("span", {text:"外观"})]));
+  const seg = el("div", {cls:"seg"});
+  [["auto","跟随系统"],["light","浅色"],["dark","深色"]].forEach(([id, label]) => {
+    seg.appendChild(el("button", {
+      attrs:{"aria-pressed": String((state.settings.theme || "auto") === id)}, text:label,
+      on:{click:() => { state.settings.theme = id; save(); applyTheme(); render(); }}
+    }));
+  });
+  c1.appendChild(seg);
+  root.appendChild(c1);
+
+  /* 提醒范围 */
+  const c2 = el("div", {cls:"card"});
+  c2.appendChild(el("div", {cls:"card-h"}, [svg("bell"), el("span", {text:"总览提醒窗口"})]));
+  const seg2 = el("div", {cls:"seg"});
+  const reminderOpts = [{v:7, label:"7 天内"}, {v:14, label:"14 天内"}, {v:30, label:"30 天内"}, {v:null, label:"永不"}];
+  reminderOpts.forEach(o => seg2.appendChild(el("button", {
+    attrs:{"aria-pressed": String(o.v == null ? remindersOff() : (!remindersOff() && activeDays() === o.v))},
+    text:o.label,
+    on:{click:() => { state.settings.daysAhead = (o.v == null ? "off" : o.v); save(); render(); }}
+  })));
+  c2.appendChild(seg2);
+  c2.appendChild(el("div", {cls:"hint", text: remindersOff()
+    ? "已关闭：总览不再显示「关键日期」提醒卡片，也不会提示逾期。记录里的日期照常保存，随时可以再打开。"
+    : "总览会列出这么多天内的投递截止、笔试、面试和跟进提醒；已过期的会单独置顶。"}));
+  root.appendChild(c2);
+
+  /* 数据 */
+  const c3 = el("div", {cls:"card"});
+  c3.appendChild(el("div", {cls:"card-h"}, [svg("download"), el("span", {text:"数据备份与导出"})]));
+  c3.appendChild(el("div", {cls:"tiny dim mb12", text:
+    "所有数据只存在这台设备的浏览器里，不会上传到任何服务器。换手机或清缓存前，记得导出一份 JSON 备份。"}));
+  const b1 = el("div", {cls:"row wrap", style:{gap:"8px"}});
+  b1.appendChild(el("button", {cls:"btn primary", on:{click:exportJSON}}, [svg("download"), el("span", {text:"导出 JSON 备份"})]));
+  b1.appendChild(el("button", {cls:"btn ghost", on:{click:() => $("#fileJson").click()}}, [svg("upload"), el("span", {text:"导入 JSON"})]));
+  b1.appendChild(el("button", {cls:"btn ghost", on:{click:exportCSV}}, [svg("file"), el("span", {text:"导出 CSV 表格"})]));
+  b1.appendChild(el("button", {cls:"btn ghost", on:{click:exportMarkdown}}, [svg("file"), el("span", {text:"导出 Markdown"})]));
+  c3.appendChild(b1);
+  root.appendChild(c3);
+
+  /* 安装到手机桌面（PWA） */
+  root.appendChild(installCard());
+
+  /* 附件占用 */
+  const c4 = el("div", {cls:"card"});
+  c4.appendChild(el("div", {cls:"card-h"}, [svg("image"), el("span", {text:"附件"})]));
+  const attCount = state.apps.reduce((a, x) => a + (x.attachments || []).length, 0);
+  c4.appendChild(el("div", {cls:"small muted", text:
+    "共 " + attCount + " 个附件，保存在浏览器索引数据库（IndexedDB）里，导出 JSON 不包含附件本身。"}));
+  /* 清理无主附件：抽出成命名函数，避免超长嵌套括号写错 */
+  function cleanOrphanAttachments(){
+    confirmSheet(
+      "清理无主附件？",
+      "删除记录时附件会一并删除；这里再扫一遍，把已经不再被任何记录引用的图片/文件清掉，释放手机存储空间。",
+      "开始清理",
+      function(){
+        const alive = {};
+        state.apps.forEach(function(a){
+          (a.attachments || []).forEach(function(at){ alive[at.id] = true; });
+        });
+        Attach.keys().then(function(keys){
+          const dead = keys.filter(function(k){ return !alive[k]; });
+          if(!dead.length){ toast("没有需要清理的附件"); return; }
+          return Promise.all(dead.map(function(k){ return Attach.del(k).catch(function(){}); }))
+            .then(function(){ toast("已清理 " + dead.length + " 个无主附件"); });
+        }).catch(function(){ toast("当前环境读不到附件库，无需清理"); });
+      }
+    );
+  }
+  const cleanBtn = el("button", {cls:"btn ghost", on:{click:cleanOrphanAttachments}},
+    [svg("refresh"), el("span", {text:"清理无主附件"})]);
+  c4.appendChild(el("div", {cls:"mt12"}, [cleanBtn]));
+  root.appendChild(c4);
+
+  /* 危险区 */
+  const c5 = el("div", {cls:"card"});
+  c5.appendChild(el("div", {cls:"card-h"}, [svg("trash"), el("span", {text:"重置"})]));
+  c5.appendChild(el("div", {cls:"row", style:{gap:"8px", marginBottom:"11px"}}, [
+    el("span", {cls:"tag " + (CAN_PERSIST ? "ok" : "danger"), text:CAN_PERSIST ? "本地存储正常" : "本地存储不可用"}),
+    el("span", {cls:"tiny dim", text:CAN_PERSIST ? "数据已写入本机浏览器" : "刷新后数据会丢失，请先导出"}),
+  ]));
+  /* 持久化存储：让浏览器在空间紧张时优先保留这份数据 */
+  const persistTag = el("span", {cls:"tag " + (PERSIST_STATE === "granted" ? "ok" : "warn"),
+    text:({granted:"已获得持久化许可", denied:"未获得持久化许可", unsupported:"浏览器不支持持久化",
+           unknown:"状态未知"})[PERSIST_STATE] || "检测中…"});
+  c5.appendChild(el("div", {cls:"row wrap", style:{gap:"8px", marginBottom:"11px"}}, [
+    persistTag,
+    el("span", {cls:"tiny dim", text:"获得许可后，手机空间紧张时浏览器不会优先清掉这份数据"}),
+  ]));
+  c5.appendChild(el("button", {cls:"btn danger block", on:{click:() => {
+    confirmSheet("清空所有数据？", "将删除全部 " + state.apps.length + " 家公司与 " + state.events.length + " 条动态，且无法撤销。建议先导出 JSON 备份。", "确认清空", () => {
+      state = blankState(); save(); render(); toast("已清空");
+    }, true);
+  }}}, [svg("trash"), el("span", {text:"清空全部数据"})]));
+  root.appendChild(c5);
+
+  root.appendChild(el("div", {cls:"tiny dim center", style:{padding:"14px 0 4px"},
+    text:"实习投递管家 · 单文件离线应用 · 数据 100% 在本地"}));
+}
+function download(name, text, mime){
+  const blob = new Blob([text], {type:(mime || "text/plain") + ";charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = el("a", {attrs:{href:url, download:name}});
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function csvCell(v){
+  const s = v == null ? "" : String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function exportJSON(){
+  flush();
+  const data = Object.assign({}, state, {exportedAt:new Date().toISOString(), app:"实习投递管家", version:1});
+  download("实习投递备份-" + todayISO() + ".json", JSON.stringify(data, null, 2), "application/json");
+  toast("已导出 JSON 备份");
+}
+function exportCSV(){
+  const cols = [
+    ["公司", a => a.company], ["岗位", a => a.position], ["地点", a => a.location],
+    ["薪资原文", a => a.salary], ["日薪(元)", a => a.salaryDaily || ""],
+    ["折合月薪(元)", a => { const m = monthlySalary(a); return m ? Math.round(m) : ""; }],
+    ["状态", a => (STATUS_MAP[a.status]||{}).label], ["心动指数", a => a.priority],
+    ["投递截止", a => a.deadline], ["笔试时间", a => a.writtenAt], ["面试时间", a => a.interviewAt],
+    ["跟进提醒", a => a.followUpAt], ["联系人", a => a.contactName], ["联系方式", a => a.contactInfo],
+    ["投递链接", a => a.applyUrl], ["标签", a => (a.tags||[]).join("/")],
+    ["工作要求", a => a.requirements], ["JD", a => a.jd], ["备注", a => a.notes],
+    ["附件数", a => (a.attachments||[]).length], ["更新时间", a => new Date(a.updatedAt||Date.now()).toLocaleString("zh-CN")],
+  ];
+  const rows = [cols.map(c => c[0]).join(",")];
+  sortApps(state.apps).forEach(a => rows.push(cols.map(c => csvCell(c[1](a))).join(",")));
+  download("实习投递清单-" + todayISO() + ".csv", "\ufeff" + rows.join("\r\n"), "text/csv");
+  toast("已导出 CSV（Excel 可直接打开）");
+}
+function exportMarkdown(){
+  const lines = ["# 实习投递清单", "", "> 导出时间：" + new Date().toLocaleString("zh-CN") + " · 共 " + state.apps.length + " 家", ""];
+  sortApps(state.apps).forEach(a => {
+    const st = STATUS_MAP[a.status] || {};
+    lines.push("## " + a.company + (a.position ? " · " + a.position : ""));
+    lines.push("");
+    lines.push("- 状态：" + (st.label || "-"));
+    if(a.location) lines.push("- 地点：" + a.location);
+    const sal = salaryText(a); if(sal) lines.push("- 薪资：" + sal);
+    if(a.priority) lines.push("- 心动指数：" + "★".repeat(a.priority) + "☆".repeat(5 - a.priority));
+    DUE_FIELDS.forEach(f => { if(a[f.key]) lines.push("- " + f.label + "：" + fmtDate(a[f.key])); });
+    if(a.contactName || a.contactInfo) lines.push("- 联系人：" + [a.contactName, a.contactInfo].filter(Boolean).join(" "));
+    if(a.applyUrl) lines.push("- 链接：" + a.applyUrl);
+    if(a.requirements) lines.push("- 工作要求：" + a.requirements);
+    if(a.jd) lines.push("- JD：" + a.jd);
+    if(a.notes) lines.push("- 备注：" + a.notes);
+    lines.push("");
+    const evs = eventsOf(a.id);
+    if(evs.length){
+      lines.push("### 动态");
+      lines.push("");
+      evs.slice().sort((x,y) => x.ts - y.ts).forEach(e => {
+        const t = EVENT_MAP[e.type] || EVENT_MAP.note;
+        lines.push("- " + fmtDate(isoOf(new Date(e.ts))) + " " + t.label + (e.round ? "（" + e.round + "）" : "") + (e.note ? "：" + e.note.replace(/\n/g, " ") : ""));
+      });
+      lines.push("");
+    }
+  });
+  download("实习投递清单-" + todayISO() + ".md", lines.join("\n"), "text/markdown");
+  toast("已导出 Markdown");
+}
+function importJSONFile(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const p = JSON.parse(String(r.result));
+      if(!p || !Array.isArray(p.apps)) throw new Error("格式不对");
+      const mode = p.apps.length;
+      confirmSheet("导入备份？", "备份里有 " + mode + " 家公司、" + ((p.events||[]).length) + " 条动态。导入会「追加」到现有数据里（不会覆盖），重复的记录请手动删。", "追加导入", () => {
+        const have = new Set(state.apps.map(a => a.id));
+        p.apps.forEach(a => {
+          if(have.has(a.id)) a.id = uid("app");
+          state.apps.push(a);
+        });
+        const mapOld = {};
+        p.apps.forEach((a, i) => { /* 保持 appId 引用 */ });
+        (p.events || []).forEach(e => state.events.push(e));
+        save(); render(); toast("已导入 " + mode + " 家公司");
+      });
+    }catch(err){
+      toast("导入失败：不是有效的备份文件");
+      console.error(err);
+    }
+  };
+  r.readAsText(file);
+}
+
+/* ============================================================
+   16. 视图：公司详情
+   ============================================================ */
+function renderDetail(root){
+  const a = appById(route.appId);
+  if(!a){ go("list"); return; }
+  const st = STATUS_MAP[a.status] || STATUS_MAP.interested;
+
+  /* 头部卡 */
+  const head = el("div", {cls:"card"});
+  const top = el("div", {cls:"row", style:{gap:"12px", alignItems:"flex-start"}});
+  top.appendChild(el("div", {cls:"logo", style:{background:colorOf(a.company), width:"48px", height:"48px", fontSize:"19px", borderRadius:"13px"}, text:initialOf(a.company)}));
+  const info = el("div", {cls:"grow"});
+  info.appendChild(el("div", {style:{fontSize:"17px", fontWeight:"750", letterSpacing:"-.3px"}, text:a.company}));
+  info.appendChild(el("div", {cls:"small muted", text:a.position || "未填岗位"}));
+  info.appendChild(el("div", {cls:"row wrap", style:{gap:"6px", marginTop:"7px"}}, [
+    el("span", {cls:"pill " + st.cls, text:st.label}),
+    a.priority ? el("span", {cls:"tag"}, starRow(a.priority, true)) : null,
+    ...(a.tags || []).map(t => el("span", {cls:"tag", text:t})),
+  ]));
+  top.appendChild(info);
+  head.appendChild(top);
+
+  const due = nearestDue(a);
+  if(due != null && !["rejected","archived"].includes(a.status)){
+    head.appendChild(el("div", {cls:"alert " + (due <= 2 ? "warn" : "info"), style:{marginTop:"12px", marginBottom:"0"}},
+      [svg("bell"), el("span", {}, [
+        el("b", {text:due === 0 ? "今天" : due + " 天后"}),
+        el("span", {text:"有安排 · " + DUE_FIELDS.filter(f => a[f.key] && dayDiff(a[f.key]) === due).map(f => f.label + " " + fmtDate(a[f.key])).join("，")}),
+      ])]));
+  }
+
+  /* 快捷操作 */
+  const acts = el("div", {cls:"row wrap", style:{gap:"8px", marginTop:"12px"}});
+  acts.appendChild(el("button", {cls:"btn primary sm", on:{click:() => openEventForm(a.id, null)}}, [svg("plus"), el("span", {text:"记一条动态"})]));
+  acts.appendChild(el("button", {cls:"btn ghost sm", on:{click:() => openAppForm(a)}}, [svg("edit"), el("span", {text:"编辑"})]));
+  const nextSt = nextStatus(a);
+  if(nextSt) acts.appendChild(el("button", {cls:"btn ghost sm", on:{click:() => quickStatus(a, nextSt.id)}},
+    [svg("check"), el("span", {text:"标记为" + nextSt.label})]));
+  if(a.applyUrl && safeUrl(a.applyUrl)) acts.appendChild(el("a", {cls:"btn ghost sm", attrs:{href:safeUrl(a.applyUrl), target:"_blank", rel:"noopener noreferrer"}}, [svg("link"), el("span", {text:"打开招聘页"})]));
+  acts.appendChild(el("button", {cls:"btn danger sm", on:{click:() => {
+    confirmSheet("删除这家公司？", "会同时删除它的 " + eventsOf(a.id).length + " 条动态和所有附件，无法恢复。", "删除", () => {
+      const atts = (a.attachments || []).slice();
+      state.apps = state.apps.filter(x => x.id !== a.id);
+      state.events = state.events.filter(e => e.appId !== a.id);
+      save(); go("list");
+      atts.forEach(at => Attach.del(at.id).catch(() => {}));
+      toast("已删除 " + a.company);
+    }, true);
+  }}}, [svg("trash"), el("span", {text:"删除"})]));
+  head.appendChild(acts);
+  root.appendChild(head);
+
+  /* 详情 / 动态 分段 */
+  const seg = el("div", {cls:"seg mb12"});
+  [["info","基本信息"],["timeline","动态（" + eventsOf(a.id).length + "）"],["files","附件（" + (a.attachments||[]).length + "）"]].forEach(([id, label]) => {
+    seg.appendChild(el("button", {
+      attrs:{"aria-pressed": String(route.detailTab === id)}, text:label,
+      on:{click:() => { route.detailTab = id; render(); }}
+    }));
+  });
+  root.appendChild(seg);
+
+  if(route.detailTab === "info") detailInfo(root, a);
+  else if(route.detailTab === "timeline") detailTimeline(root, a);
+  else detailFiles(root, a);
+}
+function nextStatus(a){
+  const order = ["interested","applied","written","interview","offer"];
+  const i = order.indexOf(a.status);
+  if(i < 0 || i >= order.length - 1) return null;
+  return STATUS_MAP[order[i + 1]];
+}
+function quickStatus(a, id){
+  const st = STATUS_MAP[id];
+  a.status = id; touch(a);
+  addEvent(a, {type: id === "offer" ? "offer" : (id === "rejected" ? "rejected" : "note"),
+    date: todayISO(), title:"", note:"状态更新为「" + st.label + "」", toStatus:id});
+  save(); render(); toast("已标记为" + st.label);
+}
+function detailInfo(root, a){
+  const c = el("div", {cls:"card"});
+  const kv = (k, v, node) => {
+    if(v == null || v === "" || (Array.isArray(v) && !v.length)) return;
+    c.appendChild(el("div", {cls:"kv"}, [el("span", {cls:"k", text:k}),
+      node || el("span", {cls:"v", text:String(v)})]));
+  };
+  const locNode = el("span", {cls:"v"}, [el("span", {text:a.location})]);
+  if(a.location && /[\u4e00-\u9fa5]/.test(a.location)){
+    const l = linkEl("https://map.baidu.com/search/" + encodeURIComponent(a.location), "地图", "tiny");
+    if(l){ l.style.marginLeft = "8px"; locNode.appendChild(l); }
+  }
+  kv("地点", a.location, locNode);
+  kv("薪资", salaryText(a));
+  if(a.salaryDaily) kv("折合", "约 ¥" + fmtMoney(Number(a.salaryDaily) * MONTH_DAYS) + "/月 · 日均 ¥" + a.salaryDaily);
+  const m = monthlySalary(a);
+  if(m && !a.salaryDaily) kv("折算月薪", "约 ¥" + fmtMoney(m) + "/月");
+  DUE_FIELDS.forEach(f => kv(f.label, a[f.key], el("span", {cls:"v"},
+    [el("span", {text:fmtDate(a[f.key]) + " " + weekdayCN(a[f.key])}),
+     el("span", {cls:"dim tiny", text:"（" + relFrom(a[f.key]) + "）", style:{marginLeft:"6px"}})])));
+  kv("联系人", a.contactName);
+  kv("联系方式", a.contactInfo, contactNode(a.contactInfo));
+  kv("投递链接", a.applyUrl, linkEl(a.applyUrl, a.applyUrl));
+  if(a.tags && a.tags.length) kv("标签", a.tags.join(" · "));
+  kv("创建时间", new Date(a.createdAt || Date.now()).toLocaleString("zh-CN"));
+  root.appendChild(c);
+
+  if(a.requirements){
+    const r = el("div", {cls:"card"});
+    r.appendChild(el("div", {cls:"card-h"}, [svg("check"), el("span", {text:"工作要求"})]));
+    r.appendChild(el("div", {cls:"longtext", text:a.requirements}));
+    root.appendChild(r);
+  }
+  if(a.jd){
+    const j = el("div", {cls:"card"});
+    j.appendChild(el("div", {cls:"card-h"}, [svg("file"), el("span", {text:"JD 原文"})]));
+    j.appendChild(el("div", {cls:"longtext", text:a.jd}));
+    root.appendChild(j);
+  }
+  if(a.notes){
+    const n = el("div", {cls:"card"});
+    n.appendChild(el("div", {cls:"card-h"}, [svg("edit"), el("span", {text:"备注"})]));
+    n.appendChild(el("div", {cls:"longtext", text:a.notes}));
+    root.appendChild(n);
+  }
+}
+function contactNode(v){
+  if(!v) return null;
+  const box = el("span", {cls:"v"});
+  const text = String(v);
+  const wrap = el("span", {text:text});
+  box.appendChild(wrap);
+  const phone = /(1[3-9]\d{9})/.exec(text);
+  if(phone) box.appendChild(el("a", {cls:"btn sm ghost", style:{marginLeft:"8px"}, attrs:{href:"tel:" + phone[1]}}, [svg("phone"), el("span", {text:"拨号"})]));
+  const mail = /[\w.+-]+@[\w-]+\.[\w.]+/.exec(text);
+  if(mail) box.appendChild(el("a", {cls:"btn sm ghost", style:{marginLeft:"8px"}, attrs:{href:"mailto:" + mail[0]}}, [svg("mail"), el("span", {text:"发邮件"})]));
+  return box;
+}
+function detailTimeline(root, a){
+  const c = el("div", {cls:"card pad0", style:{padding:"14px"}});
+  c.appendChild(el("button", {cls:"btn primary block mb12", on:{click:() => openEventForm(a.id, null)}},
+    [svg("plus"), el("span", {text:"记一条动态"})]));
+  const evs = eventsOf(a.id);
+  if(!evs.length){
+    c.appendChild(el("div", {cls:"dim small center", style:{padding:"18px 0"},
+      text:"还没有动态。投递、笔试、每轮面试、Offer、被拒都记一条，时间线会把整条流程串起来。"}));
+  } else {
+    const tl = el("div", {cls:"tl"});
+    evs.forEach(e => tl.appendChild(eventItem(e, false)));
+    c.appendChild(tl);
+  }
+  root.appendChild(c);
+}
+function detailFiles(root, a){
+  const c = el("div", {cls:"card"});
+  c.appendChild(el("div", {cls:"card-h"}, [svg("image"), el("span", {text:"附件（截图 / JD / 简历版本）"})]));
+  const grid = el("div", {cls:"att-grid"});
+  (a.attachments || []).forEach(at => grid.appendChild(attTile(a, at, true)));
+  c.appendChild(grid);
+  const drop = el("div", {cls:"drop mt12 no-print", text:"＋ 添加图片 / PDF（截图、JD、投过的简历版本）"});
+  const picker = el("input", {attrs:{type:"file", multiple:"multiple", accept:"image/*,.pdf"}, style:{display:"none"}});
+  picker.addEventListener("change", () => addAttachments(a, picker.files));
+  drop.addEventListener("click", () => picker.click());
+  /* 桌面端拖拽 */
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
+  drop.addEventListener("drop", e => { if(e.dataTransfer && e.dataTransfer.files) addAttachments(a, e.dataTransfer.files); });
+  c.appendChild(drop); c.appendChild(picker);
+  c.appendChild(el("div", {cls:"tiny dim mt8",
+    text:"附件保存在本机浏览器的索引数据库里，不上传云端。导出 JSON 备份不包含附件本身。"}));
+  root.appendChild(c);
+}
+function attTile(app, at, editable){
+  const box = el("div", {cls:"att"});
+  const isImg = /^image\//.test(at.type || "");
+  box.appendChild(el("div", {cls:"fx", text:isImg ? "🖼" : (at.name || "").split(".").pop().slice(0,4).toUpperCase()}));
+  box.appendChild(el("div", {cls:"nm", text:at.name || "附件"}));
+  if(editable){
+    box.appendChild(el("button", {cls:"del no-print", text:"×", attrs:{title:"删除附件"},
+      on:{click: e => {
+        e.stopPropagation();
+        confirmSheet("删除这个附件？", at.name || "", "删除", () => {
+          app.attachments = (app.attachments || []).filter(x => x.id !== at.id);
+          save(); Attach.del(at.id).catch(() => {}); render(); toast("已删除附件");
+        }, true);
+      }}}));
+  }
+  box.addEventListener("click", () => {
+    Attach.get(at.id).then(blob => {
+      if(!blob){ toast("文件已丢失（可能是清过浏览器数据）"); return; }
+      if(isImg){
+        const u = blobUrl(blob);
+        $("#lightboxImg").src = u;
+        $("#lightbox").classList.add("open");
+      } else {
+        const u = blobUrl(blob);
+        const link = el("a", {attrs:{href:u, download:at.name || "file", target:"_blank", rel:"noopener"}});
+        document.body.appendChild(link); link.click(); link.remove();
+      }
+    }).catch(() => toast("读取附件失败"));
+  });
+  /* 异步补缩略图 */
+  if(isImg){
+    Attach.get(at.id).then(blob => {
+      if(!blob) return;
+      const u = blobUrl(blob);
+      const img = el("img", {attrs:{src:u, alt:at.name || "", loading:"lazy"}});
+      box.insertBefore(img, box.firstChild);
+      const fx = box.querySelector(".fx"); if(fx) fx.remove();
+    }).catch(() => {});
+  }
+  return box;
+}
+const MAX_ATT = 10 * 1024 * 1024;
+function addAttachments(app, files){
+  const arr = Array.from(files || []);
+  if(!arr.length) return;
+  let ok = 0, skip = 0;
+  let chain = Promise.resolve();
+  arr.forEach(f => {
+    chain = chain.then(() => {
+      if(f.size > MAX_ATT){ skip++; return; }
+      const id = uid("att");
+      return Attach.put(id, f).then(() => {
+        app.attachments = app.attachments || [];
+        app.attachments.push({id:id, name:f.name, type:f.type, size:f.size, addedAt:Date.now()});
+        ok++;
+      }).catch(() => { skip++; });
+    });
+  });
+  chain.then(() => {
+    touch(app); save(); render();
+    toast("已添加 " + ok + " 个附件" + (skip ? "，" + skip + " 个失败或超过 10MB" : ""));
+  });
+}
+
+/* ============================================================
+   17. 表单：投递记录
+   ============================================================ */
+const COMMON_CITIES = ["北京","上海","深圳","广州","杭州","成都","南京","武汉","西安","苏州","长沙","远程"];
+function fRow(label, node, hint, req){
+  const f = el("div", {cls:"field"});
+  f.appendChild(el("label", {}, [el("span", {text:label}), req ? el("span", {cls:"req", text:"*"}) : null]));
+  f.appendChild(node);
+  if(hint) f.appendChild(el("div", {cls:"hint", text:hint}));
+  return f;
+}
+function input(type, value, ph){
+  const t = type || "text";
+  const a = {type:t, value:value == null ? "" : value, placeholder:ph || "", autocomplete:"off"};
+  if(t === "number"){ a.inputmode = "decimal"; a.step = "any"; a.min = "0"; }
+  if(t === "url"){ a.inputmode = "url"; a.autocapitalize = "off"; a.spellcheck = "false"; }
+  if(t === "text"){ a.enterkeyhint = "next"; }
+  return el("input", {attrs:a});
+}
+function textarea(value, ph, rows){
+  return el("textarea", {attrs:{placeholder:ph || "", rows:rows || 4}}, [String(value == null ? "" : value)]);
+}
+function selectOf(options, value){
+  const s = el("select");
+  options.forEach(o => {
+    const opt = el("option", {attrs:{value:o.id}, text:o.label});
+    if(String(o.id) === String(value)) opt.setAttribute("selected","selected");
+    s.appendChild(opt);
+  });
+  return s;
+}
+function openAppForm(app){
+  const isNew = !app;
+  const d = app ? JSON.parse(JSON.stringify(app)) : {
+    id:uid("app"), company:"", position:"", location:"", salary:"", salaryUnit:"day", salaryDaily:"",
+    status:"interested", priority:3, requirements:"", jd:"", applyUrl:"", contactName:"", contactInfo:"",
+    tags:[], notes:"", deadline:"", writtenAt:"", interviewAt:"", followUpAt:"",
+    createdAt:Date.now(), updatedAt:Date.now(), attachments:[],
+  };
+  const body = el("div");
+
+  /* 基本信息 */
+  const fs1 = el("fieldset");
+  fs1.appendChild(el("legend", {text:"基本信息"}));
+  const cName = input("text", d.company, "例：字节跳动");
+  fs1.appendChild(fRow("公司名称", cName, null, true));
+  const cPos = input("text", d.position, "例：后端开发实习生");
+  fs1.appendChild(fRow("岗位名称", cPos));
+  const cLoc = input("text", d.location, "例：北京 / 上海·徐汇 / 远程");
+  const fs1b = fRow("工作地点", cLoc, "可以写到区或园区，详情页会生成地图链接");
+  /* 常用城市：就地插入一行建议，不用弹层（弹层会把已填的表单顶掉） */
+  const cityHint = el("div", {cls:"row wrap", style:{gap:"6px", margin:"-5px 0 13px"}});
+  COMMON_CITIES.forEach(c => cityHint.appendChild(el("button", {
+    cls:"tag", attrs:{type:"button"}, text:c,
+    on:{click:() => { cLoc.value = c; cLoc.focus(); }}
+  })));
+  fs1.appendChild(fs1b);
+  fs1.appendChild(cityHint);
+
+  const stSel = selectOf(STATUS.map(s => ({id:s.id, label:s.label})), d.status);
+  const urlIn = input("url", d.applyUrl, "https://…");
+  const g2 = el("div", {cls:"grid2"}, [fRow("当前状态", stSel), fRow("投递链接", urlIn, null)]);
+  fs1.appendChild(g2);
+
+  const prWrap = el("div");
+  const stars = starRow(d.priority || 0, false);
+  stars._onPick = n => { d.priority = n; $$(".stars button", stars).forEach((b, i) => b.classList.toggle("on", i < n)); };
+  prWrap.appendChild(stars);
+  fs1.appendChild(fRow("心动指数（越想去星越多）", prWrap));
+  const tagIn = input("text", (d.tags || []).join(" "), "空格分隔，例：大厂 有转正 远程友好");
+  fs1.appendChild(fRow("标签", tagIn, "空格分隔，列表和详情页会显示成小标签"));
+  body.appendChild(fs1);
+
+  /* 薪资 */
+  const fs2 = el("fieldset");
+  fs2.appendChild(el("legend", {text:"薪资"}));
+  const cSal = input("text", d.salary, "例：200/天、4-6k、8k×14薪、25元/小时");
+  fs2.appendChild(fRow("薪资原文", cSal, "按招聘页原样填就行，会自动折算月薪用于对比"));
+  const dayRow = el("div", {cls:"grid2"});
+  const cDay = input("number", d.salaryDaily || "", "例：200");
+  const unitSel = selectOf(SALARY_UNITS.map(u => ({id:u.id, label:u.label})), d.salaryUnit || "day");
+  dayRow.appendChild(fRow("日薪数字（可选）", cDay));
+  dayRow.appendChild(fRow("按什么算", unitSel));
+  fs2.appendChild(dayRow);
+  const calc = el("div", {cls:"hint"});
+  fs2.appendChild(calc);
+  function refreshCalc(){
+    const tmp = {salary:cSal.value, salaryDaily:cDay.value};
+    const m = monthlySalary(tmp), dd = dailyRate(tmp);
+    calc.textContent = m ? ("折算：约 ¥" + fmtMoney(m) + "/月 · 日均 ¥" + fmtMoney(dd)) : "填了薪资后这里会显示折算结果";
+  }
+  cSal.addEventListener("input", refreshCalc);
+  cDay.addEventListener("input", refreshCalc);
+  refreshCalc();
+  body.appendChild(fs2);
+
+  /* 关键日期 */
+  const fs3 = el("fieldset");
+  fs3.appendChild(el("legend", {text:"关键日期"}));
+  const dRow = el("div", {cls:"grid2"});
+  const cDl = input("date", d.deadline);
+  const cWr = input("date", d.writtenAt);
+  const cIv = input("date", d.interviewAt);
+  const cFu = input("date", d.followUpAt);
+  dRow.appendChild(fRow("投递截止", cDl));
+  dRow.appendChild(fRow("笔试 / 测评", cWr));
+  dRow.appendChild(fRow("面试时间", cIv));
+  dRow.appendChild(fRow("跟进提醒", cFu));
+  fs3.appendChild(dRow);
+  fs3.appendChild(el("div", {cls:"hint", text:"填了日期就会出现在「总览」的倒计时里；过期未处理的会单独提醒。"}));
+  body.appendChild(fs3);
+
+  /* 工作内容 */
+  const fs4 = el("fieldset");
+  fs4.appendChild(el("legend", {text:"工作内容"}));
+  const cReq = textarea(d.requirements, "例：本科及以上，每周到岗 4 天，熟悉 Java/MySQL…", 3);
+  fs4.appendChild(fRow("工作要求", cReq));
+  const cJd = textarea(d.jd, "把招聘页的 JD 原文粘进来，面试前复习用", 4);
+  fs4.appendChild(fRow("JD 原文", cJd));
+  body.appendChild(fs4);
+
+  /* 联系人 */
+  const fs5 = el("fieldset");
+  fs5.appendChild(el("legend", {text:"联系人 / 人脉"}));
+  const cCn = input("text", d.contactName, "例：张 HR / 学长内推");
+  const cCi = input("text", d.contactInfo, "手机号 / 微信 / 邮箱");
+  fs5.appendChild(fRow("姓名 / 角色", cCn));
+  fs5.appendChild(fRow("联系方式", cCi, "填了手机号或邮箱，详情页会出现「拨号」「发邮件」按钮"));
+  body.appendChild(fs5);
+
+  /* 备注 */
+  const fs6 = el("fieldset");
+  fs6.appendChild(el("legend", {text:"备注"}));
+  fs6.appendChild(fRow("自由备注", textarea(d.notes, "面试感受、要准备的东西、打听来的消息…", 3)));
+  body.appendChild(fs6);
+
+  /* 附件 */
+  if(!isNew){
+    const fs7 = el("fieldset");
+    fs7.appendChild(el("legend", {text:"附件"}));
+    fs7.appendChild(el("div", {cls:"hint", text:"保存后在详情页的「附件」里添加截图 / JD / 简历版本。"}));
+    body.appendChild(fs7);
+  }
+
+  const foot = [
+    el("button", {cls:"btn", text:"取消", on:{click:closeSheet}}),
+    el("button", {cls:"btn primary", text:isNew ? "保存记录" : "保存修改", on:{click:submit}}),
+  ];
+  function submit(){
+    const name = cName.value.trim();
+    if(!name){ cName.focus(); toast("请先填公司名称"); return; }
+    const wasStatus = d.status;
+    Object.assign(d, {
+      company:name, position:cPos.value.trim(), location:cLoc.value.trim(),
+      salary:cSal.value.trim(), salaryUnit:unitSel.value, salaryDaily:cDay.value ? Number(cDay.value) : "",
+      status:stSel.value, applyUrl:urlIn.value.trim(),
+      requirements:cReq.value.trim(), jd:cJd.value.trim(),
+      contactName:cCn.value.trim(), contactInfo:cCi.value.trim(),
+      tags:tagIn.value.split(/[\s,，、]+/).map(x => x.trim()).filter(Boolean).slice(0,8),
+      notes:$("textarea", fs6).value.trim(),
+      deadline:cDl.value, writtenAt:cWr.value, interviewAt:cIv.value, followUpAt:cFu.value,
+      updatedAt:Date.now(),
+    });
+    if(isNew){
+      d.createdAt = Date.now();
+      state.apps.push(d);
+      if(d.status !== "interested"){
+        addEvent(d, {type:EID_FOR(d.status), date:todayISO(), note:"初始状态：" + STATUS_MAP[d.status].label, toStatus:d.status});
+      }
+      toast("已添加 " + d.company);
+    } else {
+      const i = state.apps.findIndex(x => x.id === d.id);
+      state.apps[i] = d;
+      if(wasStatus !== d.status){
+        addEvent(d, {type:EID_FOR(d.status), date:todayISO(), note:"状态更新为「" + STATUS_MAP[d.status].label + "」", toStatus:d.status});
+      }
+      toast("已保存");
+    }
+    save();
+    closeSheet();
+    if(isNew) go("detail", d.id); else render();
+  }
+  openSheet(isNew ? "新增投递记录" : "编辑 · " + d.company, body, foot);
+}
+function EID_FOR(status){
+  if(status === "offer") return "offer";
+  if(status === "rejected") return "rejected";
+  if(status === "written") return "written";
+  if(status === "interview") return "interview";
+  if(status === "applied") return "submit";
+  return "note";
+}
+
+/* ============================================================
+   18. 表单：动态事件
+   ============================================================ */
+function openEventForm(appId, ev){
+  const app = appById(appId);
+  if(!app) return;
+  const isNew = !ev;
+  const d = ev ? JSON.parse(JSON.stringify(ev)) : {
+    id:uid("ev"), appId:appId, type:"interview", date:todayISO(), round:"一面",
+    mode:"", interviewer:"", result:"", note:"", ts:Date.now(),
+  };
+
+  const body = el("div");
+  const typeSeg = el("div", {cls:"seg mb12"});
+  EVENT_TYPES.forEach(t => typeSeg.appendChild(el("button", {
+    attrs:{"aria-pressed": String(d.type === t.id)}, text:t.label,
+    on:{click:() => { d.type = t.id; $$("button", typeSeg).forEach((b, i) => b.setAttribute("aria-pressed", String(EVENT_TYPES[i].id === d.type))); syncFields(); }}
+  })));
+  body.appendChild(fRow("事件类型", typeSeg));
+
+  const cDate = input("date", d.date || todayISO());
+  body.appendChild(fRow("日期", cDate));
+
+  /* 面试专属 */
+  const ivBox = el("div");
+  const cRound = selectOf(["一面","二面","三面","HR 面","群面","终面","加面"].map(x => ({id:x, label:x})), d.round || "一面");
+  const cMode = selectOf([{id:"", label:"未填"},{id:"线上", label:"线上"},{id:"线下", label:"线下"},{id:"电话", label:"电话"}], d.mode || "");
+  const cIv = input("text", d.interviewer || "", "例：技术 Leader / HR 王姐");
+  ivBox.appendChild(el("div", {cls:"grid2"}, [fRow("轮次", cRound), fRow("形式", cMode)]));
+  ivBox.appendChild(fRow("面试官", cIv));
+  body.appendChild(ivBox);
+
+  const cRes = selectOf([{id:"", label:"待定 / 未填"},{id:"通过", label:"通过"},{id:"待定", label:"待定"},{id:"挂了", label:"挂了"}], d.result || "");
+  const resBox = el("div");
+  resBox.appendChild(fRow("结果", cRes));
+  body.appendChild(resBox);
+
+  const cNote = textarea(d.note || "", "被问到的问题、自己的表现、下次要改的地方…", 5);
+  body.appendChild(fRow("记录 / 复盘", cNote, "这段文字会完整保留在时间线上"));
+
+  function syncFields(){
+    const t = d.type;
+    ivBox.style.display = (t === "interview") ? "" : "none";
+    resBox.style.display = (t === "interview" || t === "written" || t === "screen") ? "" : "none";
+  }
+  syncFields();
+
+  const foot = [
+    el("button", {cls:"btn", text:"取消", on:{click:closeSheet}}),
+    el("button", {cls:"btn primary", text:isNew ? "保存动态" : "保存修改", on:{click:submit}}),
+  ];
+  function submit(){
+    Object.assign(d, {
+      date:cDate.value || todayISO(),
+      round:d.type === "interview" ? cRound.value : "",
+      mode:d.type === "interview" ? cMode.value : "",
+      interviewer:d.type === "interview" ? cIv.value.trim() : "",
+      result:(d.type === "interview" || d.type === "written" || d.type === "screen") ? cRes.value : "",
+      note:cNote.value.trim(),
+    });
+    if(isNew){
+      d.ts = Date.now();
+      state.events.push(d);
+      /* 自动推进状态 */
+      const nx = statusAfter(app, d.type);
+      if(nx){
+        app.status = nx; d.toStatus = nx;
+        toast("已记为「" + EVENT_MAP[d.type].label + "」，状态更新为「" + STATUS_MAP[nx].label + "」");
+      } else {
+        toast("已记录：" + EVENT_MAP[d.type].label);
+      }
+      touch(app);
+    } else {
+      const i = state.events.findIndex(x => x.id === d.id);
+      state.events[i] = d;
+      toast("已保存");
+    }
+    save(); closeSheet(); render();
+  }
+  openSheet(isNew ? "记一条动态 · " + app.company : "编辑动态", body, foot);
+}
+
+/* ============================================================
+   19. PWA：安装到桌面 + 离线缓存
+   ============================================================ */
+const PWA = (function(){
+  let installEvent = null;      /* Android/Chrome 抓到的安装事件 */
+  let installed = false;        /* 是否已经在独立窗口里运行 */
+  let swReg = null;
+  let updateReady = false;
+  let reloaded = false;         /* 防止 controllerchange 触发多次刷新 */
+  const listeners = [];
+
+  function isStandalone(){
+    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+           window.navigator.standalone === true ||
+           document.referrer.indexOf("android-app://") === 0;
+  }
+  function isIOS(){
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function isSecureContextOk(){
+    return location.protocol === "https:" || location.hostname === "localhost" ||
+           location.hostname === "127.0.0.1";
+  }
+  function isFileProtocol(){ return location.protocol === "file:"; }
+
+  /* 状态：'installed' | 'ready'（可一键装）| 'ios'（手动添加到主屏幕）| 'insecure'（需要 https）| 'file'（本地文件） */
+  function state(){
+    if(installed || isStandalone()) return "installed";
+    if(isFileProtocol()) return "file";
+    if(installEvent) return "ready";
+    if(isIOS()) return "ios";
+    if(!isSecureContextOk()) return "insecure";
+    return "manual";
+  }
+  function onChange(fn){ listeners.push(fn); }
+  function emit(){ listeners.forEach(fn => { try{ fn(); }catch(e){} }); }
+
+  function promptInstall(){
+    if(!installEvent){ toast("这个浏览器没给出安装入口，请用浏览器菜单里的「安装应用 / 添加到主屏幕」"); return Promise.resolve("unavailable"); }
+    const ev = installEvent;
+    installEvent = null;
+    ev.prompt();
+    return ev.userChoice.then(choice => {
+      if(choice && choice.outcome === "accepted"){ toast("已开始安装，去桌面上找「投递管家」"); }
+      else { toast("已取消，随时可以在设置里再装"); installEvent = ev; }
+      emit();
+      return choice && choice.outcome;
+    }).catch(() => "error");
+  }
+
+  function registerSW(){
+    if(!("serviceWorker" in navigator)) return;
+    if(!isSecureContextOk()) return;                 /* file:// 和 http(非本机) 装不了 SW */
+    navigator.serviceWorker.register("./sw.js", {scope:"./"}).then(reg => {
+      swReg = reg;
+      if(reg.waiting && navigator.serviceWorker.controller) markUpdate();
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", () => {
+          if(nw.state === "installed" && navigator.serviceWorker.controller) markUpdate();
+        });
+      });
+      /* 每次回到前台顺手查一次更新 */
+      document.addEventListener("visibilitychange", () => {
+        if(!document.hidden) reg.update().catch(() => {});
+      });
+    }).catch(err => {
+      console.warn("Service Worker 注册失败（离线缓存不可用，应用仍可正常使用）", err);
+    });
+    navigator.serviceWorker.addEventListener("message", e => {
+      if(e.data && e.data.type === "SW_UPDATED") markUpdate();
+    });
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      /* 只有“确实检测到新版本”且还没刷过时才刷新，避免首次安装 SW 时白刷一次 */
+      if(updateReady && !reloaded){ reloaded = true; location.reload(); }
+    });
+  }
+  function markUpdate(){
+    if(updateReady) return;
+    updateReady = true;
+    toast("有新版本，正在更新…");
+    setTimeout(() => {
+      if(swReg && swReg.waiting){ swReg.waiting.postMessage({type:"SKIP_WAITING"}); }
+      if(!reloaded){ reloaded = true; location.reload(); }
+    }, 700);
+  }
+
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    installEvent = e;
+    emit();
+  });
+  window.addEventListener("appinstalled", () => {
+    installed = true; installEvent = null;
+    toast("已装到桌面，以后从这里直接打开");
+    emit();
+  });
+  if(window.matchMedia){
+    const mq = window.matchMedia("(display-mode: standalone)");
+    const fn = () => { installed = isStandalone(); emit(); };
+    if(mq.addEventListener) mq.addEventListener("change", fn);
+    else if(mq.addListener) mq.addListener(fn);
+  }
+
+  return {
+    state:state, onChange:onChange, promptInstall:promptInstall,
+    registerSW:registerSW, isSecureContextOk:isSecureContextOk,
+    isIOS:isIOS, isStandalone:isStandalone
+  };
+})();
+
+function installCard(){
+  const c = el("div", {cls:"card"});
+
+  function paint(){
+    clear(c);
+    c.appendChild(el("div", {cls:"card-h"}, [svg("download"), el("span", {text:"装到手机桌面"})]));
+    const st = PWA.state();
+
+    if(st === "installed"){
+      c.appendChild(el("div", {cls:"row", style:{gap:"8px"}}, [
+        el("span", {cls:"tag ok", text:"已安装"}),
+        el("span", {cls:"small muted", text:"正以独立 App 方式运行，支持离线使用。"}),
+      ]));
+      return;
+    }
+
+    /* 提示按“当前状态 + 设备类型”组合，避免 iOS 用户看到无关的 http 提示 */
+    let msg;
+    if(PWA.isIOS()) msg = "iPhone / iPad 只能用 Safari 添加：点底部的「分享」按钮 → 往下找到「添加到主屏幕」→ 命名后点添加。（微信内置浏览器、Chrome for iOS 都不支持）";
+    else if(st === "ready") msg = "这个浏览器支持一键安装：点下面的按钮，桌面上就会出现「投递管家」图标，打开后没有地址栏，完全离线可用。";
+    else if(st === "insecure") msg = "当前是 http 访问，浏览器不允许安装。用 https 网址打开（例如挂到 GitHub Pages）就能装了。";
+    else if(st === "file") msg = "当前是本地文件方式打开的，浏览器不允许安装成 App。先用网址访问（见 README），再回来安装。";
+    else msg = "没检测到自动安装入口：请用浏览器菜单里的「安装应用」或「添加到主屏幕」。";
+    c.appendChild(el("div", {cls:"small muted mb12", text:msg}));
+
+    if(st === "ready" && !PWA.isIOS()){
+      c.appendChild(el("div", {cls:"alert info", style:{marginBottom:"11px"}}, [
+        el("div", {text:"离线可用：装好后即使没网也能打开和记录，数据照样存在本机。"}),
+      ]));
+    }
+
+    const row = el("div", {cls:"row wrap", style:{gap:"8px"}});
+    if(st === "ready" && !PWA.isIOS()){
+      row.appendChild(el("button", {cls:"btn primary", on:{click:() => PWA.promptInstall().then(() => paint())}},
+        [svg("plus"), el("span", {text:"一键安装"})]));
+    } else if(!PWA.isIOS() && st !== "file" && st !== "insecure"){
+      row.appendChild(el("button", {cls:"btn primary", on:{click:() => PWA.promptInstall()}},
+        [svg("plus"), el("span", {text:"尝试安装"})]));
+    }
+    row.appendChild(el("button", {cls:"btn ghost", on:{click:pwaDiag}}, [svg("check"), el("span", {text:"检查安装条件"})]));
+    c.appendChild(row);
+  }
+  paint();
+  PWA.onChange(paint);
+  return c;
+}
+
+/* 安装条件自检：把浏览器给出的判断依据摊开，方便排查“为什么装不了” */
+function pwaDiag(){
+  const standalone = !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  const rows = [
+    ["页面地址", location.href],
+    ["协议", location.protocol + (PWA.isSecureContextOk() ? "（允许安装）" : "（需要 https 或 localhost）")],
+    /* 这两条用来区分“真安装”和“只是加了个浏览器快捷方式” */
+    ["当前是不是独立 App", standalone
+      ? "是 —— 真安装成功（无地址栏，离线可用）"
+      : "不是 —— 现在只是普通网页。如果是从桌面图标点进来的，那说明那个图标只是浏览器快捷方式，不是真安装"],
+    ["设置里有没有安装入口", (function(){
+      const st = PWA.state();
+      return ({ready:"有，可一键安装", installed:"已安装", ios:"iOS 需手动添加", insecure:"没有（不是安全上下文）",
+               file:"没有（file:// 方式）", manual:"没有，需用浏览器菜单手动添加"})[st] || st;
+    })()],
+    ["Service Worker 支持", ("serviceWorker" in navigator) ? "支持" : "不支持"],
+    ["Service Worker 状态", (function(){
+      try{
+        if(!("serviceWorker" in navigator)) return "不支持";
+        if(!navigator.serviceWorker.controller) return "尚未接管（首次打开正常，刷新一次即可）";
+        return "已接管 —— 离线可用";
+      }catch(e){ return "读取失败"; }
+    })()],
+    ["manifest 是否被读到", (function(){
+      const l = document.querySelector('link[rel="manifest"]');
+      return l ? l.getAttribute("href") : "没有 manifest 链接";
+    })()],
+    ["运行模式", standalone ? "standalone（独立窗口）" : "browser（带地址栏的普通页签）"],
+    ["系统 / 浏览器", (PWA.isIOS() ? "iOS / iPadOS" : "Android 或桌面") + " · " + (navigator.userAgent.indexOf("Chrome/") >= 0 ? "Chromium 内核" : "非 Chromium 内核")],
+  ];
+  const body = el("div");
+  rows.forEach(([k, v]) => {
+    const valEl = (k === "页面地址" && /^https?:/.test(String(v)))
+      ? linkEl(String(v), String(v))
+      : el("span", {text:String(v)});
+    body.appendChild(el("div", {cls:"kv"}, [
+      el("span", {cls:"k", text:k, style:{width:"132px"}}),
+      el("span", {cls:"v"}, [valEl]),
+    ]));
+  });
+  body.appendChild(el("div", {cls:"alert info mt12", style:{marginBottom:"0"}}, [
+    el("div", {text:"装不了通常是三个原因：① 用 http 而不是 https；② 用 file:// 直接打开文件；③ iOS 上必须用 Safari（微信内置浏览器、Chrome for iOS 都不行）。"}),
+  ]));
+  body.appendChild(el("div", {cls:"alert warn mt8", style:{marginBottom:"0"}}, [
+    el("div", {text:"「当前是不是独立 App」显示“不是”，但桌面上已经有图标？那是浏览器快捷方式而不是真安装（比如某些国产浏览器的“添加到桌面”）。真安装的标志是：打开后没有地址栏、断网也能用。这种浏览器请换 Chrome 或 Edge 再装一次。"}),
+  ]));
+  openSheet("安装条件检查", body, [el("button", {cls:"btn primary", text:"知道了", on:{click:closeSheet}})]);
+}
+
+/* ============================================================
+   20. 自检（打开 index.html?selftest=1 触发，不影响正常使用）
+   ============================================================ */
+function runSelfTest(){
+  const results = [];
+  const ok = (name, cond, detail) => results.push({name:name, pass:!!cond, detail:detail});
+  const near = (a, b, tol) => a != null && Math.abs(a - b) <= (tol == null ? 1 : tol);
+
+  /* 薪资解析 */
+  ok("200/天 -> 月薪 4350", near((parseSalary("200/天") || {}).monthly, 200 * 21.75));
+  ok("日薪中文「200元一天」-> 识别为天", near((parseSalary("200元一天") || {}).monthly, 4350), JSON.stringify(parseSalary("200元一天")));
+  ok("4-6k -> 取均值 5000", near((parseSalary("4-6k") || {}).monthly, 5000));
+  ok("25元/小时 -> 月薪 4350", near((parseSalary("25元/小时") || {}).monthly, 25 * 174));
+  ok("8k×14薪 -> 识别为月薪 8000", near((parseSalary("8k×14薪") || {}).monthly, 8000), JSON.stringify(parseSalary("8k×14薪")));
+  ok("年薪 24万 -> 月薪 20000", near((parseSalary("24万/年") || {}).monthly, 20000), JSON.stringify(parseSalary("24万/年")));
+  ok("空薪资 -> null", parseSalary("") === null && parseSalary("面议") === null);
+  const dc = dailyRate({salaryDaily:200});
+  ok("日薪 200 -> 日均 200", near(dc, 200));
+  ok("money 格式化", fmtMoney(12000) === "1.2万" && fmtMoney(3400) === "3,400", fmtMoney(12000) + "/" + fmtMoney(3400));
+
+  /* 日期 */
+  const t = todayISO();
+  ok("todayISO 格式 YYYY-MM-DD", /^\d{4}-\d{2}-\d{2}$/.test(t), t);
+  ok("dayDiff 今天 = 0", dayDiff(t) === 0);
+  const d3 = isoOf(new Date(Date.now() + 3 * DAY));
+  ok("dayDiff 三天后 = 3", dayDiff(d3) === 3, String(dayDiff(d3)));
+  const dm1 = isoOf(new Date(Date.now() - DAY));
+  ok("dayDiff 昨天 = -1", dayDiff(dm1) === -1, String(dayDiff(dm1)));
+  ok("parseDay 非法输入 -> null", parseDay("abc") === null && parseDay(null) === null);
+  ok("relFrom 文案", relFrom(t) === "今天" && relFrom(d3) === "3 天后" && relFrom(dm1) === "昨天",
+     relFrom(t) + "/" + relFrom(d3) + "/" + relFrom(dm1));
+
+  /* 状态推进规则 */
+  const mk = st => ({id:"x", status:st, company:"测试", priority:3, attachments:[]});
+  ok("已投 + 面试 -> 面试中", statusAfter(mk("applied"), "interview") === "interview");
+  ok("已投 + 笔试 -> 笔试中", statusAfter(mk("applied"), "written") === "written");
+  ok("笔试中 + 投递事件 -> 不回退", statusAfter(mk("written"), "submit") === false);
+  ok("面试中 + Offer -> Offer", statusAfter(mk("interview"), "offer") === "offer");
+  ok("已挂 + 面试 -> 不复活", statusAfter(mk("interview"), "rejected") === "rejected" && statusAfter(mk("rejected"), "interview") === false);
+  ok("备注事件不推进状态", statusAfter(mk("applied"), "note") === false);
+
+  /* 统计口径 */
+  const had = state.apps, hadEv = state.events;
+  state.apps = [
+    {id:"t1", company:"A", status:"interview", priority:5, attachments:[], salary:"200/天"},
+    {id:"t2", company:"B", status:"offer", priority:4, attachments:[], salary:"6k"},
+    {id:"t3", company:"C", status:"rejected", priority:2, attachments:[]},
+    {id:"t4", company:"D", status:"applied", priority:1, attachments:[]},
+  ];
+  state.events = [{id:"e1", appId:"t1", type:"submit", ts:Date.now() - 9 * DAY}];
+  const s2 = stats();
+  ok("统计：进入面试 = 2", s2.interview === 2, String(s2.interview));
+  ok("统计：Offer = 1", s2.offer === 1);
+  ok("统计：投出去 7 天没动静 = 1", s2.noReply === 1, String(s2.noReply));
+  ok("统计：进行中 = 3", s2.active === 3, String(s2.active));
+  ok("薪资列表 len 2 / 过滤掉未填", salaryList().length === 2, JSON.stringify(salaryList()));
+  ok("即将到期：无日期时为空", upcoming(7).length === 0);
+  state.apps[3].deadline = isoOf(new Date(Date.now() + 2 * DAY));
+  const up2 = upcoming(7);
+  ok("即将到期：识别 2 天后截止", up2.length === 1 && up2[0].days === 2, JSON.stringify(up2.map(x => x.days)));
+  state.apps[3].deadline = isoOf(new Date(Date.now() - 2 * DAY));
+  ok("逾期识别", overdue().length === 1);
+  /* 「永不」提醒开关 */
+  const hadDays = state.settings.daysAhead;
+  state.settings.daysAhead = "off";
+  ok("永不：remindersOff 为真", remindersOff() === true);
+  ok("永不：即将到期为空", upcoming(30).length === 0);
+  ok("永不：逾期也为空", overdue().length === 0);
+  ok("永不：activeDays 不为 NaN", !isNaN(activeDays()), String(activeDays()));
+  state.settings.daysAhead = 7;
+  ok("恢复 7 天：重新开始提醒", upcoming(7).length === 1 && remindersOff() === false);
+  state.settings.daysAhead = hadDays;
+  ok("排序：心动指数优先", sortApps(state.apps)[0].company === "A" || state.settings.sort !== "priority");
+  state.apps = had; state.events = hadEv;
+
+  /* DOM 骨架 */
+  ok("五个主视图都在", ["dash","list","timeline","stats","settings"].every(n => $("#view-" + n)));
+  ok("底部导航 5 个入口", $$("#tabbar button").length === 5, String($$("#tabbar button").length));
+  ok("总览已渲染内容", $("#view-dash").childElementCount > 0, String($("#view-dash").childElementCount));
+  ok("画布 #overlay / #sheet 存在", !!$("#overlay") && !!$("#sheet"));
+  ok("JSON 导入 input 已挂载", !!$("#fileJson"));
+  ok("存储可写（CAN_PERSIST）", CAN_PERSIST);
+
+  /* PWA */
+  ok("manifest 链接存在", !!document.querySelector('link[rel="manifest"]'));
+  ok("apple-touch-icon 链接存在", !!document.querySelector('link[rel="apple-touch-icon"]'));
+  ok("viewport 开启 viewport-fit=cover", /viewport-fit=cover/.test((document.querySelector('meta[name="viewport"]') || {}).content || ""));
+  ok("Service Worker 可用", ("serviceWorker" in navigator) || location.protocol === "file:");
+  ok("PWA 状态可读", ["installed","ready","ios","insecure","file","manual"].indexOf(PWA.state()) >= 0, PWA.state());
+  ok("安装卡片渲染进设置页", !!$("#view-settings") && document.body.innerHTML.indexOf("装到手机桌面") >= 0);
+  if(location.protocol === "file:"){
+    ok("file:// 下不注册 SW（符合预期）", true, "本地文件方式，安装与离线缓存不可用，属正常");
+  } else if(location.protocol === "https:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
+    ok("安全上下文允许安装", PWA.isSecureContextOk(), location.protocol);
+  } else {
+    ok("http 非本机 -> 不注册 SW（符合预期）", !PWA.isSecureContextOk(), location.host);
+  }
+
+  const pass = results.filter(r => r.pass).length;
+  const fail = results.length - pass;
+
+  /* 渲染报告 */
+  const body = el("div");
+  body.appendChild(el("div", {cls:"alert " + (fail ? "danger" : "info")}, [
+    el("div", {}, [
+      el("b", {text:fail ? (fail + " 项未通过") : "全部通过"}),
+      el("div", {cls:"tiny", text:"共 " + results.length + " 项 · 通过 " + pass + " · 失败 " + fail,
+        style:{marginTop:"2px", opacity:".8"}}),
+    ]),
+  ]));
+  results.forEach(r => {
+    body.appendChild(el("div", {cls:"kv"}, [
+      el("span", {cls:"k", text:r.pass ? "✓" : "✗", style:{color:r.pass ? "var(--ok)" : "var(--danger)", width:"22px", fontWeight:"800"}}),
+      el("span", {cls:"v"}, [
+        el("div", {text:r.name, style:{fontSize:"13px"}}),
+        r.detail ? el("div", {cls:"tiny dim mono", text:r.detail}) : null,
+      ]),
+    ]));
+  });
+  openSheet("自检报告（" + pass + "/" + results.length + "）", body, [
+    el("button", {cls:"btn primary", text:"知道了", on:{click:closeSheet}}),
+  ]);
+  console.log("[selftest]", pass + "/" + results.length, results.filter(r => !r.pass));
+  return {pass:pass, fail:fail, results:results};
+}
+window.__internTrackerSelfTest = runSelfTest;
+
+/* 请求“持久化存储”许可：手机存储紧张时，浏览器默认可能清掉网站数据，
+   申请之后这份数据会被优先保留。不支持的浏览器静默跳过。 */
+let PERSIST_STATE = "unsupported";
+function requestPersistentStorage(){
+  try{
+    if(!navigator.storage || !navigator.storage.persist){ PERSIST_STATE = "unsupported"; return; }
+    navigator.storage.persisted().then(already => {
+      if(already){ PERSIST_STATE = "granted"; return null; }
+      return navigator.storage.persist().then(ok => { PERSIST_STATE = ok ? "granted" : "denied"; });
+    }).catch(() => { PERSIST_STATE = "unknown"; });
+  }catch(e){ PERSIST_STATE = "unsupported"; }
+}
+
+/* ============================================================
+   21. 启动
+   ============================================================ */
+(function mountJsonPicker(){
+  const fj = el("input", {attrs:{type:"file", accept:".json,application/json"}});
+  fj.id = "fileJson";
+  fj.style.display = "none";
+  fj.addEventListener("change", () => {
+    if(fj.files && fj.files[0]) importJSONFile(fj.files[0]);
+    fj.value = "";
+  });
+  document.body.appendChild(fj);
+})();
+
+buildShell();
+
+/* 申请持久化存储（降低被浏览器自动清理数据的风险） */
+requestPersistentStorage();
+
+/* PWA：注册 Service Worker（离线缓存 + 后台更新）。失败不影响应用本身。 */
+try{ PWA.registerSW(); }catch(err){ console.warn("PWA 初始化失败", err); }
+
+window.addEventListener("beforeunload", flush);
+document.addEventListener("visibilitychange", () => { if(document.hidden) flush(); });
+
+if(/[?&]selftest=1\b/.test(location.search)){
+  try{ runSelfTest(); }catch(err){ console.error("自检异常", err); toast("自检异常：" + err.message); }
+}
+})();
+</script>
+</body>
+</html>
